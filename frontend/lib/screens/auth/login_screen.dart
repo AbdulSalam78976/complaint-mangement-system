@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/svg.dart';
 import 'package:frontend/controllers/auth%20controller/login_controller.dart';
+import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/utils/utils.dart';
 import 'package:get/get.dart';
@@ -117,7 +117,7 @@ class LoginScreen extends StatelessWidget {
               controller: controller.emailController,
               decoration: _inputDecoration(
                 "Email Address",
-                "assets/icons/email.svg",
+                Icons.email_outlined,
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
@@ -135,7 +135,7 @@ class LoginScreen extends StatelessWidget {
             TextFormField(
               controller: controller.passwordController,
               obscureText: controller.obscureText.value,
-              decoration: _inputDecoration("Password", "assets/icons/lock.svg")
+              decoration: _inputDecoration("Password", Icons.lock_outlined)
                   .copyWith(
                     suffixIcon: IconButton(
                       icon: Icon(
@@ -154,7 +154,7 @@ class LoginScreen extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 10),
 
             // Forgot Password
             Align(
@@ -167,7 +167,7 @@ class LoginScreen extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 10),
 
             // Sign In Button
             SizedBox(
@@ -192,24 +192,43 @@ class LoginScreen extends StatelessWidget {
                     : const Text("Sign In"),
               ),
             ),
+            const SizedBox(height: 20),
+
+            // Don't have an account? Sign Up
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Don't have an account? ",
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: AppPalette.greyColor,
+                  ),
+                ),
+                TextButton(
+                  onPressed: () {
+                    Get.toNamed(RouteName.signupScreen);
+                  },
+                  child: Text(
+                    "Sign Up",
+                    style: TextStyle(
+                      color: AppPalette.secondaryColor,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
 
-  /// Input decoration helper
-  InputDecoration _inputDecoration(String label, String iconPath) {
+  /// Input decoration helper with Material Icons
+  InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
-      prefixIcon: Padding(
-        padding: const EdgeInsets.all(12),
-        child: SvgPicture.asset(
-          iconPath,
-          color: AppPalette.secondaryColor,
-          width: 20,
-        ),
-      ),
+      prefixIcon: Icon(icon, color: AppPalette.secondaryColor),
       filled: true,
       fillColor: Colors.grey[100],
       border: OutlineInputBorder(
