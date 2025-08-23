@@ -3,8 +3,6 @@ import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/utils/sessionmanager.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:lottie/lottie.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/controllers/auth%20controller/login_controller.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/utils/utils.dart';
 import 'package:get/get.dart';
 
-class LoginScreen extends StatelessWidget {
-  LoginScreen({super.key});
+class ForgetPasswordScreen extends StatelessWidget {
+  ForgetPasswordScreen({super.key});
 
   final _formKey = GlobalKey<FormState>();
-  final LoginController controller = Get.put(LoginController());
+  final emailController = TextEditingController();
+  final isLoading = false.obs;
 
   @override
   Widget build(BuildContext context) {
@@ -33,7 +33,7 @@ class LoginScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 30),
                   Text(
-                    "Welcome to Our Platform",
+                    "Password Recovery",
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppPalette.secondaryColor,
@@ -43,7 +43,7 @@ class LoginScreen extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 40),
                     child: Text(
-                      "Sign in to access your personalized dashboard and manage your account.",
+                      "Enter your email address and we'll send you a link to reset your password.",
                       textAlign: TextAlign.center,
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: AppPalette.greyColor,
@@ -55,7 +55,7 @@ class LoginScreen extends StatelessWidget {
             ),
           ),
 
-          // RIGHT SIDE - LOGIN FORM
+          // RIGHT SIDE - FORGET PASSWORD FORM
           Expanded(
             flex: 5,
             child: Center(
@@ -77,7 +77,7 @@ class LoginScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-                child: _buildLoginForm(theme, context),
+                child: _buildForgetPasswordForm(theme, context),
               ),
             ),
           ),
@@ -86,8 +86,8 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  /// Login Form
-  Widget _buildLoginForm(ThemeData theme, BuildContext context) {
+  /// Forget Password Form
+  Widget _buildForgetPasswordForm(ThemeData theme, BuildContext context) {
     return Form(
       key: _formKey,
       child: Obx(
@@ -97,7 +97,7 @@ class LoginScreen extends StatelessWidget {
             Image.asset('assets/images/cms-logo.png', height: 150),
             const SizedBox(height: 20),
             Text(
-              "Welcome Back",
+              "Forgot Password?",
               style: theme.textTheme.headlineMedium?.copyWith(
                 fontWeight: FontWeight.bold,
                 color: AppPalette.primaryColor,
@@ -105,7 +105,7 @@ class LoginScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              "Sign in to continue to your account",
+              "Enter your email to receive a password reset link",
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: AppPalette.greyColor,
               ),
@@ -114,7 +114,7 @@ class LoginScreen extends StatelessWidget {
 
             // Email
             TextFormField(
-              controller: controller.emailController,
+              controller: emailController,
               decoration: _inputDecoration(
                 "Email Address",
                 Icons.email_outlined,
@@ -129,49 +129,9 @@ class LoginScreen extends StatelessWidget {
                 return null;
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 30),
 
-            // Password
-            TextFormField(
-              controller: controller.passwordController,
-              obscureText: controller.obscureText.value,
-              decoration: _inputDecoration("Password", Icons.lock_outlined)
-                  .copyWith(
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        controller.obscureText.value
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: AppPalette.secondaryColor,
-                      ),
-                      onPressed: controller.toggleObscureText,
-                    ),
-                  ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Please enter your password';
-                }
-                return null;
-              },
-            ),
-            const SizedBox(height: 10),
-
-            // Forgot Password
-            Align(
-              alignment: Alignment.centerRight,
-              child: TextButton(
-                onPressed: () {
-                  Get.toNamed(RouteName.forgetPasswordScreen);
-                },
-                child: Text(
-                  "Forgot Password?",
-                  style: TextStyle(color: AppPalette.secondaryColor),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            // Sign In Button
+            // Reset Password Button
             SizedBox(
               width: double.infinity,
               height: 50,
@@ -182,36 +142,32 @@ class LoginScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                onPressed: controller.isLoading.value
+                onPressed: isLoading.value
                     ? null
                     : () {
                         if (_formKey.currentState!.validate()) {
-                          controller.login();
+                          _resetPassword();
                         }
                       },
-                child: controller.isLoading.value
+                child: isLoading.value
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text("Sign In"),
+                    : const Text("Send Reset Link"),
               ),
             ),
             const SizedBox(height: 20),
 
-            // Don't have an account? Sign Up
+            // Back to Login
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  "Don't have an account? ",
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: AppPalette.greyColor,
-                  ),
+                  "Remember your password?",
+                  style: TextStyle(color: AppPalette.greyColor),
                 ),
                 TextButton(
-                  onPressed: () {
-                    Get.toNamed(RouteName.signupScreen);
-                  },
+                  onPressed: () => Get.toNamed(RouteName.loginScreen),
                   child: Text(
-                    "Sign Up",
+                    "Login",
                     style: TextStyle(
                       color: AppPalette.secondaryColor,
                       fontWeight: FontWeight.bold,
@@ -226,18 +182,57 @@ class LoginScreen extends StatelessWidget {
     );
   }
 
-  /// Input decoration helper with Material Icons
+  // Input Decoration
   InputDecoration _inputDecoration(String label, IconData icon) {
     return InputDecoration(
       labelText: label,
       prefixIcon: Icon(icon, color: AppPalette.secondaryColor),
-      filled: true,
-      fillColor: Colors.grey[100],
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide.none,
+        borderSide: BorderSide(color: AppPalette.borderColor),
       ),
-      contentPadding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppPalette.borderColor),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppPalette.primaryColor, width: 2),
+      ),
+      errorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppPalette.errorColor, width: 2),
+      ),
+      focusedErrorBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(color: AppPalette.errorColor, width: 2),
+      ),
+      filled: true,
+      fillColor: Colors.white,
     );
+  }
+
+  // Reset Password Logic
+  void _resetPassword() {
+    isLoading.value = true;
+    
+    // Simulate API call
+    Future.delayed(const Duration(seconds: 2), () {
+      isLoading.value = false;
+      
+      // Show success message
+      Get.snackbar(
+        'Success',
+        'Password reset link has been sent to your email',
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.green,
+        colorText: Colors.white,
+      );
+      
+      // Navigate back to login screen after delay
+      Future.delayed(const Duration(seconds: 2), () {
+        Get.offNamed(RouteName.loginScreen);
+      });
+    });
   }
 }

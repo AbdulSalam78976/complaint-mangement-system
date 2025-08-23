@@ -8,10 +8,27 @@ const UserSchema = new Schema({
   passwordHash: { type: String, required: true },
   role: { type: String, enum: ['user', 'staff', 'admin'], default: 'user', index: true },
   active: { type: Boolean, default: true },
+
+  // ✅ Email verification
+  verified: { type: Boolean, default: false },
+  verificationToken: { type: String },
+  verificationExpires: { type: Date },
+
+  // ✅ Forgot password
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+
 }, { timestamps: true });
 
 UserSchema.methods.toSafeJSON = function () {
-  return { _id: this._id, name: this.name, email: this.email, role: this.role, active: this.active };
+  return { 
+    _id: this._id, 
+    name: this.name, 
+    email: this.email, 
+    role: this.role, 
+    active: this.active, 
+    verified: this.verified 
+  };
 };
 
 export default model('User', UserSchema);
