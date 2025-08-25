@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:get/get.dart';
+import 'package:frontend/screens/widgets/appbar.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -9,21 +10,7 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: AppBar(
-        title: Text(
-          'Settings',
-          style: TextStyle(
-            color: AppPalette.whiteColor,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        backgroundColor: AppPalette.primaryColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: AppPalette.whiteColor),
-          onPressed: () => Get.back(),
-        ),
-      ),
+      appBar: const CustomAppBar(title: 'Settings', showBack: true),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [

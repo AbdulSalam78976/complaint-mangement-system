@@ -215,11 +215,11 @@ class ForgetPasswordScreen extends StatelessWidget {
   // Reset Password Logic
   void _resetPassword() {
     isLoading.value = true;
-    
+
     // Simulate API call
     Future.delayed(const Duration(seconds: 2), () {
       isLoading.value = false;
-      
+
       // Show success message
       Get.snackbar(
         'Success',
@@ -228,7 +228,7 @@ class ForgetPasswordScreen extends StatelessWidget {
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
-      
+
       // Navigate back to login screen after delay
       Future.delayed(const Duration(seconds: 2), () {
         Get.offNamed(RouteName.loginScreen);

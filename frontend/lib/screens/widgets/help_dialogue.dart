@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:get/get.dart';
 
-void _showHelpDialog() {
+void showHelpDialog() {
   Get.dialog(
     AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

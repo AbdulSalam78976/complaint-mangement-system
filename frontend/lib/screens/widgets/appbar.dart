@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
+import 'package:frontend/screens/widgets/help_dialogue.dart';
+import 'package:frontend/screens/widgets/logout_dialogue.dart';
 import 'package:frontend/screens/widgets/notifications_dialogue.dart';
+import 'package:get/get.dart';
+import 'package:frontend/resources/routes/routes_names.dart';
 
 // Custom AppBar with notifications and profile menu
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
@@ -9,13 +13,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final double logoHeight;
   final int notificationCount;
   final String profileImageUrl;
-  final VoidCallback? onProfilePressed;
-  final VoidCallback? onSettingsPressed;
-  final VoidCallback? onHelpPressed;
-  final VoidCallback? onLogoutPressed;
   final Color backgroundColor;
   final bool showNotifications;
   final bool showProfile;
+  final bool showBack;
+  final VoidCallback? onBackPressed;
 
   const CustomAppBar({
     Key? key,
@@ -26,13 +28,11 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.profileImageUrl =
         'https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80',
 
-    this.onProfilePressed,
-    this.onSettingsPressed,
-    this.onHelpPressed,
-    this.onLogoutPressed,
     this.backgroundColor = Colors.white,
     this.showNotifications = true,
     this.showProfile = true,
+    this.showBack = false,
+    this.onBackPressed,
   }) : super(key: key);
 
   @override
@@ -46,6 +46,24 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       toolbarHeight: 80,
       title: Row(
         children: [
+          if (showBack)
+            Container(
+              margin: const EdgeInsets.only(right: 8),
+              decoration: BoxDecoration(
+                color: Theme.of(context).cardColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: IconButton(
+                onPressed:
+                    onBackPressed ?? () => Navigator.of(context).maybePop(),
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.grey[700],
+                  size: 20,
+                ),
+              ),
+            ),
+
           // Logo
           Image.asset(logoAssetPath, height: logoHeight),
 
@@ -122,16 +140,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       onSelected: (value) {
         switch (value) {
           case 'profile':
-            onProfilePressed?.call();
+            Get.toNamed(RouteName.profileScreen);
             break;
           case 'settings':
-            onSettingsPressed?.call();
+            Get.toNamed(RouteName.settingsScreen);
             break;
           case 'help':
-            onHelpPressed?.call();
+            showHelpDialog();
             break;
           case 'logout':
-            onLogoutPressed?.call();
+            showLogoutDialog();
             break;
         }
       },

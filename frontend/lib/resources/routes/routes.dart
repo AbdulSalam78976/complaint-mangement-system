@@ -6,6 +6,10 @@ import 'package:frontend/screens/auth/forget_password_screen.dart';
 import 'package:frontend/screens/user/user_dashboard.dart';
 import 'package:frontend/screens/user/complaint_details_screen.dart';
 import 'package:frontend/screens/user/settings_screen.dart';
+import 'package:frontend/screens/user/complaint_list_screen.dart';
+import 'package:frontend/screens/user/notifications_screen.dart';
+import 'package:frontend/screens/user/profile_screen.dart';
+import 'package:frontend/screens/user/complaint_tracking_screen.dart';
 import 'package:get/get.dart';
 
 class AppRoutes {
@@ -43,6 +47,13 @@ class AppRoutes {
 
     // New user screens
     GetPage(
+      name: RouteName.complaintListScreen,
+      page: () => ComplaintListScreen(),
+      transitionDuration: Duration(milliseconds: 250),
+      transition: Transition.rightToLeftWithFade,
+    ),
+
+    GetPage(
       name: RouteName.complaintDetailsScreen,
       page: () => ComplaintDetailsScreen(),
       transitionDuration: Duration(milliseconds: 250),
@@ -50,8 +61,29 @@ class AppRoutes {
     ),
 
     GetPage(
+      name: RouteName.notificationsScreen,
+      page: () => NotificationsScreen(),
+      transitionDuration: Duration(milliseconds: 250),
+      transition: Transition.rightToLeftWithFade,
+    ),
+
+    GetPage(
       name: RouteName.settingsScreen,
       page: () => SettingsScreen(),
+      transitionDuration: Duration(milliseconds: 250),
+      transition: Transition.rightToLeftWithFade,
+    ),
+
+    GetPage(
+      name: RouteName.complaintTrackingScreen,
+      page: () => ComplaintTrackingScreen(),
+      transitionDuration: Duration(milliseconds: 250),
+      transition: Transition.rightToLeftWithFade,
+    ),
+
+    GetPage(
+      name: RouteName.profileScreen,
+      page: () => ProfileScreen(),
       transitionDuration: Duration(milliseconds: 250),
       transition: Transition.rightToLeftWithFade,
     ),

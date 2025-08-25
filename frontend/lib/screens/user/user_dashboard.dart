@@ -325,21 +325,9 @@ class _UserDashboardState extends State<UserDashboard>
                                 color: AppPalette.successColor,
                                 backgroundColor: AppPalette.successColor
                                     .withOpacity(0.1),
-                                onTap: () =>
-                                    Get.toNamed(RouteName.complaintListScreen),
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ActionCard(
-                                title: 'Analytics',
-                                subtitle: 'View detailed reports',
-                                icon: Icons.analytics_outlined,
-                                color: AppPalette.secondaryColor,
-                                backgroundColor: AppPalette.secondaryColor
-                                    .withOpacity(0.1),
-                                onTap: () =>
-                                    Get.toNamed(RouteName.complaintListScreen),
+                                onTap: () => Get.toNamed(
+                                  RouteName.complaintTrackingScreen,
+                                ),
                               ),
                             ),
                           ],
@@ -388,21 +376,7 @@ class _UserDashboardState extends State<UserDashboard>
                                     backgroundColor: AppPalette.successColor
                                         .withOpacity(0.1),
                                     onTap: () => Get.toNamed(
-                                      RouteName.complaintListScreen,
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: ActionCard(
-                                    title: 'Analytics',
-                                    subtitle: 'View detailed reports',
-                                    icon: Icons.analytics_outlined,
-                                    color: AppPalette.secondaryColor,
-                                    backgroundColor: AppPalette.secondaryColor
-                                        .withOpacity(0.1),
-                                    onTap: () => Get.toNamed(
-                                      RouteName.complaintListScreen,
+                                      RouteName.complaintTrackingScreen,
                                     ),
                                   ),
                                 ),

@@ -3,7 +3,7 @@ import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:get/get.dart';
 
-void _showLogoutDialog() {
+void showLogoutDialog() {
   Get.dialog(
     AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),

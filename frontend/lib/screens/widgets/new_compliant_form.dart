@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'package:frontend/resources/theme/colors.dart';
+
 class ComplaintFormController extends GetxController {
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
@@ -45,95 +47,126 @@ void showComplaintDialog() {
   String selectedCategory = 'IT Department';
   bool isSubmitting = false;
 
-  // Initialize the controller
   final complaintController = Get.put(ComplaintFormController());
 
   final categories = [
-    {'value': 'IT Department', 'icon': Icons.computer_outlined},
-    {'value': 'HR Department', 'icon': Icons.people_outline},
-    {'value': 'Finance', 'icon': Icons.account_balance_wallet_outlined},
-    {'value': 'Facilities', 'icon': Icons.business_outlined},
-    {'value': 'Security', 'icon': Icons.security_outlined},
-    {'value': 'Other', 'icon': Icons.help_outline},
+    {
+      'value': 'IT Department',
+      'icon': Icons.computer_outlined,
+      'color': Colors.blue,
+    },
+    {
+      'value': 'HR Department',
+      'icon': Icons.people_outline,
+      'color': Colors.purple,
+    },
+    {
+      'value': 'Finance',
+      'icon': Icons.account_balance_wallet_outlined,
+      'color': Colors.green,
+    },
+    {
+      'value': 'Facilities',
+      'icon': Icons.business_outlined,
+      'color': Colors.orange,
+    },
+    {'value': 'Security', 'icon': Icons.security_outlined, 'color': Colors.red},
+    {'value': 'Other', 'icon': Icons.help_outline, 'color': Colors.grey},
   ];
 
   Get.dialog(
     StatefulBuilder(
       builder: (context, setState) {
         return Dialog(
-          backgroundColor: Colors.transparent,
+          backgroundColor: AppPalette.backgroundColor,
+          insetPadding: const EdgeInsets.all(20),
           child: Container(
-            constraints: const BoxConstraints(maxWidth: 500, maxHeight: 700),
+            constraints: const BoxConstraints(maxWidth: 500),
             decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
+              color: AppPalette.whiteColor,
+              borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: AppPalette.textColor.withOpacity(0.1),
+                  blurRadius: 30,
+                  offset: const Offset(0, 10),
                 ),
               ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Header
+                // Modern Header
                 Container(
-                  padding: const EdgeInsets.all(20),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Color(0xFF3B82F6), Color(0xFF1E40AF)],
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: AppPalette.whiteColor,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(24),
+                      topRight: Radius.circular(24),
                     ),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+                    border: Border(
+                      bottom: BorderSide(color: Colors.grey.shade200, width: 1),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(
-                        Icons.report_problem_outlined,
-                        color: Colors.white,
-                        size: 24,
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(Icons.report_problem_outlined, size: 28),
                       ),
-                      const SizedBox(width: 12),
-                      const Expanded(
-                        child: Text(
-                          'Submit New Complaint',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Submit New Complaint',
+                              style: TextStyle(
+                                color: AppPalette.textColor,
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'We\'ll get back to you soon',
+                              style: TextStyle(
+                                color: AppPalette.greyColor,
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       IconButton(
                         onPressed: () => Get.back(),
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        style: IconButton.styleFrom(
-                          backgroundColor: Colors.white.withOpacity(0.2),
-                        ),
+                        icon: Icon(Icons.close_rounded, size: 24),
                       ),
                     ],
                   ),
                 ),
 
                 // Form Content
-                Expanded(
+                Flexible(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(24),
                     child: Form(
                       key: formKey,
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           // Title
-                          const Text(
-                            'Title',
+                          Text(
+                            'Complaint Title',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -141,12 +174,31 @@ void showComplaintDialog() {
                             controller: titleController,
                             decoration: InputDecoration(
                               hintText: 'Brief description of your issue',
-                              prefixIcon: const Icon(Icons.title),
+                              prefixIcon: Icon(
+                                Icons.title,
+                                color: AppPalette.greyColor,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.blue.shade400,
+                                  width: 2,
+                                ),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
+                              fillColor: AppPalette.greyColor.withOpacity(0.1),
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
@@ -156,42 +208,60 @@ void showComplaintDialog() {
                             },
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
                           // Category
-                          const Text(
+                          Text(
                             'Department',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
                             ),
                           ),
                           const SizedBox(height: 8),
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 12),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
+                              color: Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                              ),
+                              border: Border.all(color: Colors.grey.shade300),
                             ),
                             child: DropdownButtonHideUnderline(
                               child: DropdownButton<String>(
                                 value: selectedCategory,
                                 isExpanded: true,
+                                icon: Icon(
+                                  Icons.arrow_drop_down_rounded,
+                                  color: Colors.grey.shade600,
+                                ),
                                 items: categories.map((category) {
+                                  final color = category['color'] as Color;
                                   return DropdownMenuItem(
                                     value: category['value'] as String,
                                     child: Row(
                                       children: [
-                                        Icon(
-                                          category['icon'] as IconData,
-                                          color: const Color(0xFF64748B),
-                                          size: 20,
+                                        Container(
+                                          padding: const EdgeInsets.all(6),
+                                          decoration: BoxDecoration(
+                                            color: color.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                            category['icon'] as IconData,
+                                            color: color,
+                                            size: 20,
+                                          ),
                                         ),
                                         const SizedBox(width: 12),
-                                        Text(category['value'] as String),
+                                        Text(
+                                          category['value'] as String,
+                                          style: TextStyle(
+                                            color: Colors.grey.shade800,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                   );
@@ -205,29 +275,34 @@ void showComplaintDialog() {
                             ),
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
                           // Contact Information Section
-                          const Text(
+                          Text(
                             'Contact Information',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'Provide your contact details for follow-up',
-                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          Text(
+                            'We\'ll use this to follow up with you',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
 
                           // Phone Number
-                          const Text(
+                          Text(
                             'Phone Number',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -236,12 +311,31 @@ void showComplaintDialog() {
                             keyboardType: TextInputType.phone,
                             decoration: InputDecoration(
                               hintText: 'Enter your phone number',
-                              prefixIcon: const Icon(Icons.phone),
+                              prefixIcon: Icon(
+                                Icons.phone_rounded,
+                                color: Colors.grey.shade500,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.blue.shade400,
+                                  width: 2,
+                                ),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
+                              fillColor: Colors.grey.shade50,
                               errorText:
                                   complaintController
                                       .phoneError
@@ -265,11 +359,12 @@ void showComplaintDialog() {
                           const SizedBox(height: 16),
 
                           // Email
-                          const Text(
+                          Text(
                             'Email Address',
                             style: TextStyle(
                               fontSize: 14,
                               fontWeight: FontWeight.w500,
+                              color: Colors.grey.shade700,
                             ),
                           ),
                           const SizedBox(height: 4),
@@ -278,12 +373,31 @@ void showComplaintDialog() {
                             keyboardType: TextInputType.emailAddress,
                             decoration: InputDecoration(
                               hintText: 'Enter your email address',
-                              prefixIcon: const Icon(Icons.email),
+                              prefixIcon: Icon(
+                                Icons.email_rounded,
+                                color: Colors.grey.shade500,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.blue.shade400,
+                                  width: 2,
+                                ),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
+                              fillColor: Colors.grey.shade50,
                               errorText:
                                   complaintController
                                       .emailError
@@ -306,28 +420,45 @@ void showComplaintDialog() {
                             },
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
                           // Description
-                          const Text(
+                          Text(
                             'Description',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
                             ),
                           ),
                           const SizedBox(height: 8),
                           TextFormField(
                             controller: descriptionController,
-                            maxLines: 4,
+                            maxLines: 5,
                             decoration: InputDecoration(
-                              hintText:
-                                  'Provide detailed information about your issue...',
+                              hintText: 'Describe your issue in detail...',
+                              alignLabelWithHint: true,
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.grey.shade300,
+                                ),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                borderSide: BorderSide(
+                                  color: Colors.blue.shade400,
+                                  width: 2,
+                                ),
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF8FAFC),
+                              fillColor: Colors.grey.shade50,
                             ),
                             validator: (value) {
                               if (value == null || value.trim().isEmpty) {
@@ -337,52 +468,57 @@ void showComplaintDialog() {
                             },
                           ),
 
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 24),
 
                           // Attachment
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFF8FAFC),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: const Color(0xFFE2E8F0),
-                                style: BorderStyle.solid,
+                          GestureDetector(
+                            onTap: () {
+                              Get.snackbar(
+                                'File Picker',
+                                'File picker would open here',
+                                snackPosition: SnackPosition.BOTTOM,
+                                backgroundColor: Colors.blue.shade100,
+                                colorText: Colors.blue.shade800,
+                                margin: const EdgeInsets.all(16),
+                                borderRadius: 12,
+                              );
+                            },
+                            child: Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(20),
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade50,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: Colors.grey.shade300,
+                                  style: BorderStyle.solid,
+                                ),
                               ),
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.attach_file,
-                                  size: 32,
-                                  color: Colors.grey[400],
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  'Click to add attachments (Optional)',
-                                  style: TextStyle(color: Colors.grey[600]),
-                                ),
-                                const SizedBox(height: 8),
-                                OutlinedButton.icon(
-                                  onPressed: () {
-                                    // Handle file selection
-                                    Get.snackbar(
-                                      'File Picker',
-                                      'File picker would open here',
-                                      snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: Colors.blue.withOpacity(
-                                        0.1,
-                                      ),
-                                      colorText: Colors.blue[800],
-                                      margin: const EdgeInsets.all(10),
-                                      borderRadius: 8,
-                                    );
-                                  },
-                                  icon: const Icon(Icons.folder_open),
-                                  label: const Text('Browse Files'),
-                                ),
-                              ],
+                              child: Column(
+                                children: [
+                                  Icon(
+                                    Icons.attach_file_rounded,
+                                    size: 36,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Text(
+                                    'Add attachments (Optional)',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade600,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Support images, documents, etc.',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
@@ -393,24 +529,34 @@ void showComplaintDialog() {
 
                 // Footer Buttons
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade50,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(24),
+                      bottomRight: Radius.circular(24),
+                    ),
+                    border: Border(
+                      top: BorderSide(color: Colors.grey.shade200, width: 1),
+                    ),
+                  ),
                   child: Row(
                     children: [
                       Expanded(
                         child: OutlinedButton(
                           onPressed: isSubmitting ? null : () => Get.back(),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
+
+                          child: Text(
+                            'Cancel',
+                            style: TextStyle(
+                              color: AppPalette.greyColor,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          child: const Text('Cancel'),
                         ),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: 16),
                       Expanded(
-                        flex: 2,
                         child: ElevatedButton(
                           onPressed: isSubmitting
                               ? null
@@ -421,7 +567,6 @@ void showComplaintDialog() {
                                       isSubmitting = true;
                                     });
 
-                                    // Simulate API call
                                     await Future.delayed(
                                       const Duration(seconds: 2),
                                     );
@@ -431,30 +576,26 @@ void showComplaintDialog() {
                                     });
 
                                     Get.back();
-
                                     Get.snackbar(
                                       'Success',
                                       'Complaint submitted successfully!',
                                       snackPosition: SnackPosition.BOTTOM,
-                                      backgroundColor: Colors.green,
-                                      colorText: Colors.white,
-                                      margin: const EdgeInsets.all(10),
-                                      borderRadius: 8,
+                                      backgroundColor: Colors.green.shade100,
+                                      colorText: Colors.green.shade800,
+                                      margin: const EdgeInsets.all(16),
+                                      borderRadius: 12,
+                                      icon: Icon(
+                                        Icons.check_circle,
+                                        color: Colors.green.shade600,
+                                      ),
                                     );
                                   }
                                 },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF3B82F6),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
+
                           child: isSubmitting
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
+                                  height: 24,
+                                  width: 24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
                                     valueColor: AlwaysStoppedAnimation<Color>(
@@ -462,9 +603,12 @@ void showComplaintDialog() {
                                     ),
                                   ),
                                 )
-                              : const Text(
-                                  'Submit Complaint',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
+                              : Text(
+                                  'Submit',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
                                 ),
                         ),
                       ),
