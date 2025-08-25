@@ -4,9 +4,7 @@ import 'package:frontend/screens/auth/signup_screen.dart';
 import 'package:frontend/screens/auth/splash_screen.dart';
 import 'package:frontend/screens/auth/forget_password_screen.dart';
 import 'package:frontend/screens/user/user_dashboard.dart';
-import 'package:frontend/screens/user/complaint_form_screen.dart';
 import 'package:frontend/screens/user/complaint_details_screen.dart';
-import 'package:frontend/screens/user/notifications_screen.dart';
 import 'package:frontend/screens/user/settings_screen.dart';
 import 'package:get/get.dart';
 

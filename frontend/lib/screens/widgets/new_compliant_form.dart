@@ -1,13 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+class ComplaintFormController extends GetxController {
+  final phoneController = TextEditingController();
+  final emailController = TextEditingController();
+
+  final phoneError = RxString('');
+  final emailError = RxString('');
+
+  void validatePhone(String value) {
+    if (value.isEmpty) {
+      phoneError.value = 'Phone number is required';
+    } else if (!RegExp(r'^[0-9]{10,15}$').hasMatch(value)) {
+      phoneError.value = 'Enter a valid phone number';
+    } else {
+      phoneError.value = '';
+    }
+  }
+
+  void validateEmail(String value) {
+    if (value.isEmpty) {
+      emailError.value = 'Email is required';
+    } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      emailError.value = 'Enter a valid email address';
+    } else {
+      emailError.value = '';
+    }
+  }
+
+  bool get isFormValid => phoneError.value.isEmpty && emailError.value.isEmpty;
+
+  @override
+  void onClose() {
+    phoneController.dispose();
+    emailController.dispose();
+    super.onClose();
+  }
+}
+
 void showComplaintDialog() {
   final formKey = GlobalKey<FormState>();
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   String selectedCategory = 'IT Department';
-  String selectedPriority = 'Medium';
   bool isSubmitting = false;
+
+  // Initialize the controller
+  final complaintController = Get.put(ComplaintFormController());
 
   final categories = [
     {'value': 'IT Department', 'icon': Icons.computer_outlined},
@@ -17,8 +56,6 @@ void showComplaintDialog() {
     {'value': 'Security', 'icon': Icons.security_outlined},
     {'value': 'Other', 'icon': Icons.help_outline},
   ];
-
-  final priorities = ['Low', 'Medium', 'High', 'Urgent'];
 
   Get.dialog(
     StatefulBuilder(
@@ -170,81 +207,103 @@ void showComplaintDialog() {
 
                           const SizedBox(height: 20),
 
-                          // Priority
+                          // Contact Information Section
                           const Text(
-                            'Priority',
+                            'Contact Information',
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           const SizedBox(height: 8),
-                          Row(
-                            children: priorities.map((priority) {
-                              final isSelected = selectedPriority == priority;
-                              Color priorityColor;
-                              switch (priority) {
-                                case 'Low':
-                                  priorityColor = const Color(0xFF10B981);
-                                  break;
-                                case 'Medium':
-                                  priorityColor = const Color(0xFFF59E0B);
-                                  break;
-                                case 'High':
-                                  priorityColor = const Color(0xFFEF4444);
-                                  break;
-                                case 'Urgent':
-                                  priorityColor = const Color(0xFF7C2D12);
-                                  break;
-                                default:
-                                  priorityColor = const Color(0xFF64748B);
-                              }
+                          const Text(
+                            'Provide your contact details for follow-up',
+                            style: TextStyle(fontSize: 14, color: Colors.grey),
+                          ),
+                          const SizedBox(height: 12),
 
-                              return Expanded(
-                                child: GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      selectedPriority = priority;
-                                    });
-                                  },
-                                  child: Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 12,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: isSelected
-                                          ? priorityColor
-                                          : priorityColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(8),
-                                      border: Border.all(color: priorityColor),
-                                    ),
-                                    child: Column(
-                                      children: [
-                                        Icon(
-                                          Icons.flag,
-                                          color: isSelected
-                                              ? Colors.white
-                                              : priorityColor,
-                                          size: 16,
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text(
-                                          priority,
-                                          style: TextStyle(
-                                            color: isSelected
-                                                ? Colors.white
-                                                : priorityColor,
-                                            fontWeight: FontWeight.w600,
-                                            fontSize: 12,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
+                          // Phone Number
+                          const Text(
+                            'Phone Number',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextFormField(
+                            controller: complaintController.phoneController,
+                            keyboardType: TextInputType.phone,
+                            decoration: InputDecoration(
+                              hintText: 'Enter your phone number',
+                              prefixIcon: const Icon(Icons.phone),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              errorText:
+                                  complaintController
+                                      .phoneError
+                                      .value
+                                      .isNotEmpty
+                                  ? complaintController.phoneError.value
+                                  : null,
+                            ),
+                            onChanged: complaintController.validatePhone,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Phone number is required';
+                              }
+                              if (!RegExp(r'^[0-9]{10,15}$').hasMatch(value)) {
+                                return 'Enter a valid phone number';
+                              }
+                              return null;
+                            },
+                          ),
+
+                          const SizedBox(height: 16),
+
+                          // Email
+                          const Text(
+                            'Email Address',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          TextFormField(
+                            controller: complaintController.emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            decoration: InputDecoration(
+                              hintText: 'Enter your email address',
+                              prefixIcon: const Icon(Icons.email),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF8FAFC),
+                              errorText:
+                                  complaintController
+                                      .emailError
+                                      .value
+                                      .isNotEmpty
+                                  ? complaintController.emailError.value
+                                  : null,
+                            ),
+                            onChanged: complaintController.validateEmail,
+                            validator: (value) {
+                              if (value == null || value.trim().isEmpty) {
+                                return 'Email is required';
+                              }
+                              if (!RegExp(
+                                r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                              ).hasMatch(value)) {
+                                return 'Enter a valid email address';
+                              }
+                              return null;
+                            },
                           ),
 
                           const SizedBox(height: 20),
@@ -356,7 +415,8 @@ void showComplaintDialog() {
                           onPressed: isSubmitting
                               ? null
                               : () async {
-                                  if (formKey.currentState!.validate()) {
+                                  if (formKey.currentState!.validate() &&
+                                      complaintController.isFormValid) {
                                     setState(() {
                                       isSubmitting = true;
                                     });
