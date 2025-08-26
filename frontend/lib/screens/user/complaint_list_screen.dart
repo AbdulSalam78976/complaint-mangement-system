@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/widgets/appbar.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
+import 'package:frontend/screens/widgets/new_compliant_form.dart';
 import 'package:get/get.dart';
 
 class ComplaintListScreen extends StatelessWidget {
@@ -11,7 +12,11 @@ class ComplaintListScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: const CustomAppBar(title: 'My Complaints', showBack: true),
+      appBar: const CustomAppBar(
+        title: 'My Complaints',
+        showBack: true,
+        showLogo: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -44,7 +49,7 @@ class ComplaintListScreen extends StatelessWidget {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => Get.toNamed(RouteName.complaintFormScreen),
+        onPressed: () => showComplaintDialog(),
         backgroundColor: AppPalette.primaryColor,
         foregroundColor: AppPalette.whiteColor,
         icon: const Icon(Icons.add),

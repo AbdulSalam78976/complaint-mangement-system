@@ -10,7 +10,11 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: const CustomAppBar(title: 'Settings', showBack: true),
+      appBar: const CustomAppBar(
+        title: 'Settings',
+        showBack: true,
+        showLogo: false,
+      ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [

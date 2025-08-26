@@ -24,7 +24,11 @@ class _ComplaintTrackingScreenState extends State<ComplaintTrackingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: const CustomAppBar(title: 'Track Complaint', showBack: true),
+      appBar: const CustomAppBar(
+        title: 'Track Complaint',
+        showBack: true,
+        showLogo: false,
+      ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(

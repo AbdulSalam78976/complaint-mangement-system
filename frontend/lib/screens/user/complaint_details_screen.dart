@@ -22,7 +22,11 @@ class ComplaintDetailsScreen extends StatelessWidget {
     const status = 'In Progress';
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: const CustomAppBar(title: 'Complaint Details', showBack: true),
+      appBar: const CustomAppBar(
+        title: 'Complaint Details',
+        showBack: true,
+        showLogo: false,
+      ),
       body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16.0),

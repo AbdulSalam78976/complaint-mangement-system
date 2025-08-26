@@ -313,7 +313,7 @@ class _UserDashboardState extends State<UserDashboard>
                                 color: AppPalette.greyColor,
                                 backgroundColor: AppPalette.backgroundColor,
                                 onTap: () =>
-                                    Get.toNamed(RouteName.complaintFormScreen),
+                                    Get.toNamed(RouteName.complaintListScreen),
                               ),
                             ),
                             const SizedBox(width: 16),

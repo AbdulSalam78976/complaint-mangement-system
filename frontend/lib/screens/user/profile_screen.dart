@@ -9,7 +9,11 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: const CustomAppBar(title: 'My Profile', showBack: true),
+      appBar: const CustomAppBar(
+        title: 'My Profile',
+        showBack: true,
+        showLogo: false,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
