@@ -1,56 +1,96 @@
-const Joi = require('joi');
+import Joi from 'joi';
 
+/**
+ * Base User Schema
+ * ----------------
+ * This schema defines all possible fields for a User document.
+ * We will extend this base schema into specialized schemas
+ * for different use cases (registration, update, login).
+ */
 const UserSchema = Joi.object({
+  // User's full name (required)
   name: Joi.string().trim().required().messages({
     'string.empty': 'Name is required',
     'any.required': 'Name is required'
   }),
+
+  // Email address (required, must be valid email format, lowercase, trimmed)
   email: Joi.string().email().lowercase().trim().required().messages({
     'string.email': 'Please provide a valid email address',
     'string.empty': 'Email is required',
     'any.required': 'Email is required'
   }),
+
+  // Password hash stored in DB (required at schema level, 
+  // but in login we will use raw "password" field instead)
   passwordHash: Joi.string().required().messages({
     'string.empty': 'Password is required',
     'any.required': 'Password is required'
   }),
-  role: Joi.string().valid('user', 'admin').default('user'),
-  active: Joi.boolean().default(true),
-  verified: Joi.boolean().default(false),
-  verificationToken: Joi.string().allow('', null),
-  verificationExpires: Joi.date().allow(null),
-  resetPasswordToken: Joi.string().allow('', null),
-  resetPasswordExpires: Joi.date().allow(null)
-}).options({ stripUnknown: true });
 
-// For user registration (typically requires name, email, password)
+  // Role: only "user" or "admin" allowed, defaults to "user"
+  role: Joi.string().valid('user', 'admin').default('user'),
+
+  // Whether account is active (defaults to true)
+  active: Joi.boolean().default(true),
+
+  // Email verification status
+  verified: Joi.boolean().default(false),
+  verificationToken: Joi.string().allow('', null),   // Token for email verification
+  verificationExpires: Joi.date().allow(null),       // Expiry for verification token
+
+  // Forgot password reset fields
+  resetPasswordToken: Joi.string().allow('', null),  // Token for reset password
+  resetPasswordExpires: Joi.date().allow(null)       // Expiry for reset password token
+})
+.options({ stripUnknown: true }); // Remove any unknown fields not defined in schema
+
+
+/**
+ * Registration Schema
+ * -------------------
+ * Used when a new user registers.
+ * Requires: name, email, passwordHash
+ */
 const UserRegistrationSchema = UserSchema.keys({
   name: Joi.string().trim().required(),
   email: Joi.string().email().lowercase().trim().required(),
   passwordHash: Joi.string().required()
 });
 
-// For user updates (all fields optional except restrictions on some)
+
+/**
+ * Update Schema
+ * -------------
+ * Used when updating user details.
+ * - All fields optional (name, email, passwordHash, role)
+ * - Must provide at least one field (`.min(1)`)
+ */
 const UserUpdateSchema = UserSchema.keys({
   name: Joi.string().trim(),
   email: Joi.string().email().lowercase().trim(),
   passwordHash: Joi.string(),
   role: Joi.string().valid('user', 'admin')
-}).min(1); // At least one field must be provided
+}).min(1);
 
-// For the safe JSON output (what to return to client)
-const UserSafeSchema = Joi.object({
-  _id: Joi.any(),
-  name: Joi.string().required(),
-  email: Joi.string().email().required(),
-  role: Joi.string().valid('user', 'admin').required(),
-  active: Joi.boolean().required(),
-  verified: Joi.boolean().required()
-});
 
-module.exports = {
-  UserSchema,
-  UserRegistrationSchema,
-  UserUpdateSchema,
-  UserSafeSchema
-};
+/**
+ * Login Schema
+ * ------------
+ * Used when user tries to log in.
+ * Requires: email + raw password (not passwordHash)
+ */
+const UserLoginSchema = Joi.object({
+  email: Joi.string().email().lowercase().trim().required().messages({
+    'string.email': 'Please provide a valid email address',
+    'string.empty': 'Email is required',
+    'any.required': 'Email is required'
+  }),
+  password: Joi.string().required().messages({
+    'string.empty': 'Password is required',
+    'any.required': 'Password is required'
+  })
+}).options({ stripUnknown: true }); // Strip out extra fields
+
+
+export { UserSchema, UserRegistrationSchema, UserUpdateSchema, UserLoginSchema };

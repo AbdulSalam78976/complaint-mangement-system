@@ -1,24 +1,40 @@
 import jwt from 'jsonwebtoken';
-
- const auth = (required = true) => (req, res, next) => {
+// Authentication middleware
+const auth = (required = true) => async (req, res, next) => {
   const hdr = req.headers.authorization || '';
   const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
+
   if (!token) {
-    if (required) return res.status(401).json({ error: 'Missing token' });
-    req.user = null; return next();
+    if (required) return res.status(401).json({ message: 'Missing token' });
+    req.user = null;
+    return next();
   }
+
   try {
-    req.user = jwt.verify(token, process.env.JWT_SECRET);
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Option A: Just attach decoded token
+    // req.user = decoded;
+
+    // Option B (safer): Fetch fresh user from DB
+    const user = await User.findById(decoded.id).select('-passwordHash');
+    if (!user) return res.status(401).json({ message: 'User not found' });
+
+    req.user = user;
     next();
-  } catch (e) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+  } catch (err) {
+    return res.status(401).json({ message: 'Invalid or expired token' });
   }
 };
 
- const permit = (...roles) => (req, res, next) => {
-  if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-  if (!roles.includes(req.user.role)) return res.status(403).json({ error: 'Forbidden' });
+// Role-based access control
+const permit = (...roles) => (req, res, next) => {
+  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
+  if (!roles.includes(req.user.role)) {
+    return res.status(403).json({ message: 'Forbidden' });
+  }
   next();
 };
 
- export { auth, permit };
+export { auth, permit };
