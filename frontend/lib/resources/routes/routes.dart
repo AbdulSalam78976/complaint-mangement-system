@@ -1,4 +1,5 @@
 import 'package:frontend/resources/routes/routes_names.dart';
+import 'package:frontend/screens/auth/email_verification_screen.dart';
 import 'package:frontend/screens/auth/login_screen.dart';
 import 'package:frontend/screens/auth/signup_screen.dart';
 import 'package:frontend/screens/auth/splash_screen.dart';
@@ -9,7 +10,6 @@ import 'package:frontend/screens/user/settings_screen.dart';
 import 'package:frontend/screens/user/complaint_list_screen.dart';
 import 'package:frontend/screens/user/notifications_screen.dart';
 import 'package:frontend/screens/user/profile_screen.dart';
-import 'package:frontend/screens/user/complaint_tracking_screen.dart';
 import 'package:get/get.dart';
 
 class AppRoutes {
@@ -23,6 +23,12 @@ class AppRoutes {
     GetPage(
       name: RouteName.signupScreen,
       page: () => SignupScreen(),
+      transitionDuration: Duration(milliseconds: 250),
+      transition: Transition.leftToRightWithFade,
+    ),
+    GetPage(
+      name: RouteName.emailVerificationScreen,
+      page: () => EmailVerificationScreen(),
       transitionDuration: Duration(milliseconds: 250),
       transition: Transition.leftToRightWithFade,
     ),
@@ -70,13 +76,6 @@ class AppRoutes {
     GetPage(
       name: RouteName.settingsScreen,
       page: () => SettingsScreen(),
-      transitionDuration: Duration(milliseconds: 250),
-      transition: Transition.rightToLeftWithFade,
-    ),
-
-    GetPage(
-      name: RouteName.complaintTrackingScreen,
-      page: () => ComplaintTrackingScreen(),
       transitionDuration: Duration(milliseconds: 250),
       transition: Transition.rightToLeftWithFade,
     ),

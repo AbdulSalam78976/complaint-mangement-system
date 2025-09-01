@@ -9,7 +9,6 @@ class EnhancedComplaintCard extends StatelessWidget {
   final String priority;
   final String status;
   final String time;
-  final IconData icon;
   final String description;
   final VoidCallback? onTap;
   final double? width;
@@ -22,6 +21,7 @@ class EnhancedComplaintCard extends StatelessWidget {
   final double statusFontSize;
   final double priorityFontSize;
   final double timeFontSize;
+  final IconData? customIcon;
 
   const EnhancedComplaintCard({
     Key? key,
@@ -30,7 +30,6 @@ class EnhancedComplaintCard extends StatelessWidget {
     required this.priority,
     required this.status,
     required this.time,
-    required this.icon,
     required this.description,
     this.onTap,
     this.width,
@@ -43,7 +42,61 @@ class EnhancedComplaintCard extends StatelessWidget {
     this.statusFontSize = 12,
     this.priorityFontSize = 12,
     this.timeFontSize = 12,
+    this.customIcon,
   }) : super(key: key);
+
+  IconData _getDepartmentIcon(String department) {
+    final dept = department.toLowerCase();
+
+    if (dept.contains('it') ||
+        dept.contains('tech') ||
+        dept.contains('computer')) {
+      return Icons.computer;
+    } else if (dept.contains('hr') || dept.contains('human')) {
+      return Icons.people;
+    } else if (dept.contains('finance') || dept.contains('account')) {
+      return Icons.attach_money;
+    } else if (dept.contains('maintenance') || dept.contains('facility')) {
+      return Icons.build;
+    } else if (dept.contains('admin') || dept.contains('administration')) {
+      return Icons.business_center;
+    } else if (dept.contains('security')) {
+      return Icons.security;
+    } else if (dept.contains('clean') || dept.contains('housekeeping')) {
+      return Icons.cleaning_services;
+    } else if (dept.contains('electr') || dept.contains('power')) {
+      return Icons.electrical_services;
+    } else if (dept.contains('plumb') || dept.contains('water')) {
+      return Icons.plumbing;
+    } else if (dept.contains('network') ||
+        dept.contains('wifi') ||
+        dept.contains('internet')) {
+      return Icons.wifi;
+    } else if (dept.contains('medical') || dept.contains('health')) {
+      return Icons.local_hospital;
+    } else if (dept.contains('transport') || dept.contains('vehicle')) {
+      return Icons.directions_car;
+    } else if (dept.contains('garden') || dept.contains('landscape')) {
+      return Icons.nature;
+    } else if (dept.contains('cafeteria') || dept.contains('food')) {
+      return Icons.restaurant;
+    } else {
+      return Icons.business;
+    }
+  }
+
+  IconData _getPriorityIcon(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return Icons.error_outline;
+      case 'medium':
+        return Icons.warning_outlined;
+      case 'low':
+        return Icons.info_outline;
+      default:
+        return Icons.flag_outlined;
+    }
+  }
 
   Color getStatusColor() {
     switch (status.toLowerCase()) {
@@ -107,7 +160,12 @@ class EnhancedComplaintCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: onTap ?? () => Get.toNamed(RouteName.complaintDetailsScreen),
+        onTap:
+            onTap ??
+            () => Get.toNamed(
+              RouteName.complaintDetailsScreen,
+              arguments: description,
+            ),
         borderRadius: borderRadius ?? BorderRadius.circular(20),
         child: Container(
           width: width,
@@ -136,7 +194,7 @@ class EnhancedComplaintCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
-                      icon,
+                      customIcon ?? _getDepartmentIcon(department),
                       size: iconSize,
                       color: AppPalette.greyColor,
                     ),
@@ -193,34 +251,48 @@ class EnhancedComplaintCard extends StatelessWidget {
                   color: AppPalette.greyColor,
                   height: 1.4,
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
+                  // Priority Badge
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: 12,
+                      vertical: 6,
                     ),
                     decoration: BoxDecoration(
                       color: priorityBgColor,
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    child: Text(
-                      priority,
-                      style: TextStyle(
-                        color: priorityColor,
-                        fontSize: priorityFontSize,
-                        fontWeight: FontWeight.bold,
-                      ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getPriorityIcon(priority),
+                          size: priorityFontSize + 2,
+                          color: priorityColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          priority,
+                          style: TextStyle(
+                            color: priorityColor,
+                            fontSize: priorityFontSize,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   const Spacer(),
+                  // Time Created
                   Row(
                     children: [
                       Icon(
-                        Icons.schedule_outlined,
-                        size: 16,
+                        Icons.access_time_outlined,
+                        size: timeFontSize + 2,
                         color: AppPalette.greyColor,
                       ),
                       const SizedBox(width: 4),

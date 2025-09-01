@@ -70,7 +70,7 @@ final AppTheme = ThemeData(
   iconTheme: IconThemeData(color: AppPalette.primaryColor, size: 24),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ElevatedButton.styleFrom(
-      backgroundColor: AppPalette.secondaryColor,
+      backgroundColor: AppPalette.primaryColor,
       foregroundColor: AppPalette.whiteColor,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),

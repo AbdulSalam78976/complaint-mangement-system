@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:get/get.dart';
 
 class SignupController extends GetxController {
@@ -18,59 +19,19 @@ class SignupController extends GetxController {
   }
 
   // Validation for signup fields
-  bool validateFields() {
-    if (nameController.text.trim().isEmpty ||
-        emailController.text.trim().isEmpty ||
-        passwordController.text.isEmpty ||
-        confirmPasswordController.text.isEmpty) {
-      Get.snackbar(
-        "Error",
-        "All fields are required!",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
-
-    if (!GetUtils.isEmail(emailController.text.trim())) {
-      Get.snackbar(
-        "Error",
-        "Enter a valid email address",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
-
-    if (passwordController.text.length < 6) {
-      Get.snackbar(
-        "Error",
-        "Password must be at least 6 characters long",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
-
-    if (passwordController.text != confirmPasswordController.text) {
-      Get.snackbar(
-        "Error",
-        "Passwords do not match",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-      return false;
-    }
-
-    return true;
-  }
 
   // Signup logic (dummy API/Firebase)
   Future<void> signup() async {
-    if (!validateFields()) return;
-
     try {
       isLoading.value = true;
 
       // Simulate API request
       await Future.delayed(const Duration(seconds: 2));
 
+      Get.toNamed(
+        RouteName.emailVerificationScreen,
+        arguments: {'email': emailController.text.trim()},
+      );
       // On success
       Get.snackbar(
         "Success",

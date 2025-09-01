@@ -70,25 +70,25 @@ void showNotificationsDialog() {
           final isTablet = screenWidth > 480 && screenWidth <= 768;
           final isMobile = screenWidth <= 480;
 
-          // Responsive positioning and sizing
+          // Responsive sizing
           double dialogWidth;
           double maxHeight;
           EdgeInsets margin;
           Alignment alignment;
 
           if (isDesktop) {
-            dialogWidth = 420;
+            dialogWidth = 400;
             maxHeight = screenHeight * 0.7;
             margin = EdgeInsets.only(
-              top: 80,
-              right: 24,
-              left: screenWidth - 444,
+              top: 60,
+              right: 20,
+              left: screenWidth - 420,
             );
             alignment = Alignment.topRight;
           } else if (isTablet) {
             dialogWidth = screenWidth * 0.7;
             maxHeight = screenHeight * 0.75;
-            margin = const EdgeInsets.symmetric(horizontal: 24, vertical: 60);
+            margin = const EdgeInsets.symmetric(horizontal: 20, vertical: 50);
             alignment = Alignment.center;
           } else {
             dialogWidth = screenWidth - 32;
@@ -105,27 +105,20 @@ void showNotificationsDialog() {
               constraints: BoxConstraints(maxHeight: maxHeight),
               decoration: BoxDecoration(
                 color: AppPalette.whiteColor,
-                borderRadius: BorderRadius.circular(isDesktop ? 20 : 24),
-                border: Border.all(color: AppPalette.borderColor, width: 1),
+                borderRadius: BorderRadius.circular(isDesktop ? 16 : 20),
                 boxShadow: [
                   BoxShadow(
-                    color: AppPalette.textColor.withOpacity(0.08),
-                    blurRadius: 24,
-                    offset: const Offset(0, 12),
-                    spreadRadius: 0,
-                  ),
-                  BoxShadow(
-                    color: AppPalette.primaryColor.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 4),
+                    color: AppPalette.textColor.withOpacity(0.1),
+                    blurRadius: 16,
+                    offset: const Offset(0, 8),
                   ),
                 ],
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Simplified Header
-                  _buildSimpleHeader(isDesktop, isMobile),
+                  // Close button only
+                  _buildCloseButton(isMobile),
 
                   // Notifications List
                   Flexible(
@@ -147,43 +140,19 @@ void showNotificationsDialog() {
   );
 }
 
-Widget _buildSimpleHeader(bool isDesktop, bool isMobile) {
-  return Container(
-    padding: EdgeInsets.all(isMobile ? 20 : 24),
-    decoration: BoxDecoration(
-      color: AppPalette.primaryColor,
-      borderRadius: BorderRadius.only(
-        topLeft: Radius.circular(isDesktop ? 20 : 24),
-        topRight: Radius.circular(isDesktop ? 20 : 24),
+Widget _buildCloseButton(bool isMobile) {
+  return Align(
+    alignment: Alignment.topRight,
+    child: Padding(
+      padding: EdgeInsets.all(isMobile ? 12 : 16),
+      child: IconButton(
+        onPressed: () => Get.back(),
+        icon: Icon(
+          Icons.close_rounded,
+          color: AppPalette.greyColor,
+          size: isMobile ? 20 : 24,
+        ),
       ),
-    ),
-    child: Row(
-      children: [
-        Icon(
-          Icons.notifications_outlined,
-          color: AppPalette.whiteColor,
-          size: isMobile ? 24 : 28,
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            'Notifications',
-            style: TextStyle(
-              color: AppPalette.whiteColor,
-              fontSize: isMobile ? 18 : 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-        IconButton(
-          onPressed: () => Get.back(),
-          icon: Icon(
-            Icons.close_rounded,
-            color: AppPalette.whiteColor,
-            size: isMobile ? 20 : 24,
-          ),
-        ),
-      ],
     ),
   );
 }
@@ -226,47 +195,41 @@ Widget _buildSimpleNotificationsList(
 ) {
   return ListView.builder(
     shrinkWrap: true,
-    padding: EdgeInsets.all(isMobile ? 16 : 20),
+    padding: EdgeInsets.all(isMobile ? 12 : 16),
     itemCount: notifications.length,
     itemBuilder: (context, index) {
       final notification = notifications[index];
       final isUnread = notification['unread'] == true;
 
       return Container(
-        margin: EdgeInsets.only(bottom: isMobile ? 12 : 16),
+        margin: EdgeInsets.only(bottom: isMobile ? 10 : 12),
         decoration: BoxDecoration(
           color: isUnread
               ? AppPalette.primaryColor.withOpacity(0.03)
               : AppPalette.backgroundColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isUnread
-                ? AppPalette.primaryColor.withOpacity(0.2)
-                : AppPalette.borderColor,
-            width: 1,
-          ),
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Material(
           color: AppPalette.transparentColor,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
             onTap: () => _handleNotificationTap(notification),
             child: Padding(
-              padding: EdgeInsets.all(isMobile ? 16 : 20),
+              padding: EdgeInsets.all(isMobile ? 12 : 16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Notification icon
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
                       color: (notification['color'] as Color).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
                       notification['icon'] as IconData,
                       color: notification['color'] as Color,
-                      size: isMobile ? 20 : 22,
+                      size: isMobile ? 18 : 20,
                     ),
                   ),
                   SizedBox(width: isMobile ? 12 : 16),
@@ -314,7 +277,7 @@ Widget _buildSimpleNotificationsList(
                           maxLines: isMobile ? 2 : 3,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: 8),
                         Row(
                           children: [
                             Icon(

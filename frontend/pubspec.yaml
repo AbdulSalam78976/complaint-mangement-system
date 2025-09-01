@@ -41,6 +41,7 @@ dependencies:
   shared_preferences: ^2.2.2
   http: ^1.2.1
   google_fonts: 
+  jwt_decoder: ^2.0.1
 
 
 

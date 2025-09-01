@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/widgets/new_compliant_form.dart';
 import 'package:frontend/screens/widgets/appbar.dart';
-import 'package:frontend/screens/widgets/complaint_cards.dart';
+import 'package:frontend/screens/widgets/complaint_card.dart';
 import 'package:frontend/screens/widgets/overview_card.dart';
 import 'package:frontend/screens/widgets/quickaction_card.dart';
 import 'package:get/get.dart';
@@ -316,20 +316,6 @@ class _UserDashboardState extends State<UserDashboard>
                                     Get.toNamed(RouteName.complaintListScreen),
                               ),
                             ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: ActionCard(
-                                title: 'Track Status',
-                                subtitle: 'Real-time updates',
-                                icon: Icons.track_changes_outlined,
-                                color: AppPalette.successColor,
-                                backgroundColor: AppPalette.successColor
-                                    .withOpacity(0.1),
-                                onTap: () => Get.toNamed(
-                                  RouteName.complaintTrackingScreen,
-                                ),
-                              ),
-                            ),
                           ],
                         );
                       } else {
@@ -359,24 +345,6 @@ class _UserDashboardState extends State<UserDashboard>
                                     backgroundColor: AppPalette.backgroundColor,
                                     onTap: () => Get.toNamed(
                                       RouteName.complaintFormScreen,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ActionCard(
-                                    title: 'Track Status',
-                                    subtitle: 'Real-time updates',
-                                    icon: Icons.track_changes_outlined,
-                                    color: AppPalette.successColor,
-                                    backgroundColor: AppPalette.successColor
-                                        .withOpacity(0.1),
-                                    onTap: () => Get.toNamed(
-                                      RouteName.complaintTrackingScreen,
                                     ),
                                   ),
                                 ),
@@ -426,7 +394,7 @@ class _UserDashboardState extends State<UserDashboard>
                     priority: 'High',
                     status: 'Open',
                     time: '2 hours ago',
-                    icon: Icons.router_outlined,
+
                     description:
                         'Experiencing intermittent connectivity issues across multiple floors.',
                   ),
@@ -437,7 +405,7 @@ class _UserDashboardState extends State<UserDashboard>
                     priority: 'Medium',
                     status: 'In Progress',
                     time: '1 day ago',
-                    icon: Icons.thermostat_outlined,
+
                     description:
                         'Temperature control issues in conference rooms 201-205.',
                   ),
@@ -448,7 +416,7 @@ class _UserDashboardState extends State<UserDashboard>
                     priority: 'Low',
                     status: 'Resolved',
                     time: '3 days ago',
-                    icon: Icons.security_outlined,
+
                     description:
                         'Key card access permissions have been successfully updated.',
                   ),

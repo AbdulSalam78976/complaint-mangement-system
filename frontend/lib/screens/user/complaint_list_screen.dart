@@ -2,11 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/widgets/appbar.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
+import 'package:frontend/screens/widgets/complaint_card.dart';
 import 'package:frontend/screens/widgets/new_compliant_form.dart';
 import 'package:get/get.dart';
 
-class ComplaintListScreen extends StatelessWidget {
+class ComplaintListScreen extends StatefulWidget {
   const ComplaintListScreen({super.key});
+
+  @override
+  State<ComplaintListScreen> createState() => _ComplaintListScreenState();
+}
+
+class _ComplaintListScreenState extends State<ComplaintListScreen> {
+  String _selectedFilter = 'All';
+  final List<Map<String, dynamic>> _complaints = [];
+
+  @override
+  void initState() {
+    super.initState();
+    // Initialize with sample data
+    _initializeComplaints();
+  }
+
+  void _initializeComplaints() {
+    for (int i = 0; i < 10; i++) {
+      _complaints.add({
+        'id': "${i + 1}",
+        'title': 'Complaint #${i + 1}: Network outage on floor ${i % 5 + 1}',
+        'department': 'IT Department',
+        'priority': i % 3 == 0 ? 'High' : (i % 3 == 1 ? 'Medium' : 'Low'),
+        'status': i % 3 == 0
+            ? 'Open'
+            : (i % 3 == 1 ? 'In Progress' : 'Resolved'),
+        'time': '${i + 1}h ago',
+        'description':
+            'Detailed description of complaint #${i + 1}. '
+            'This is a longer description that explains the issue in more detail. '
+            'The network outage has been affecting multiple users on floor ${i % 5 + 1}.',
+        'icon': Icons.wifi_off, // Add appropriate icon for each complaint
+      });
+    }
+  }
+
+  List<Map<String, dynamic>> get _filteredComplaints {
+    if (_selectedFilter == 'All') {
+      return _complaints;
+    } else {
+      return _complaints
+          .where((complaint) => complaint['status'] == _selectedFilter)
+          .toList();
+    }
+  }
+
+  void _handleFilterChange(String filter) {
+    setState(() {
+      _selectedFilter = filter;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -22,28 +74,42 @@ class ComplaintListScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _FiltersBar(),
-            const SizedBox(height: 12),
+            _FiltersBar(
+              selectedFilter: _selectedFilter,
+              onFilterChanged: _handleFilterChange,
+            ),
+            const SizedBox(height: 16),
             Expanded(
-              child: ListView.separated(
-                itemCount: 10,
-                separatorBuilder: (_, __) => const SizedBox(height: 12),
-                itemBuilder: (context, index) {
-                  return _ComplaintListItem(
-                    title:
-                        'Complaint #${index + 1}: Network outage on floor ${index % 5 + 1}',
-                    department: 'IT Department',
-                    priority: index % 3 == 0
-                        ? 'High'
-                        : (index % 3 == 1 ? 'Medium' : 'Low'),
-                    status: index % 3 == 0
-                        ? 'Open'
-                        : (index % 3 == 1 ? 'In Progress' : 'Resolved'),
-                    time: '${index + 1}h ago',
-                    onTap: () => Get.toNamed(RouteName.complaintDetailsScreen),
-                  );
-                },
-              ),
+              child: _filteredComplaints.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No complaints found',
+                        style: TextStyle(
+                          color: AppPalette.greyColor,
+                          fontSize: 16,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      itemCount: _filteredComplaints.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 16),
+                      itemBuilder: (context, index) {
+                        final complaint = _filteredComplaints[index];
+                        return EnhancedComplaintCard(
+                          title: complaint['title'],
+                          department: complaint['department'],
+                          priority: complaint['priority'],
+                          status: complaint['status'],
+                          time: complaint['time'],
+
+                          description: complaint['description'] ?? '',
+                          onTap: () => Get.toNamed(
+                            RouteName.complaintDetailsScreen,
+                            arguments: complaint['id'],
+                          ),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -60,18 +126,45 @@ class ComplaintListScreen extends StatelessWidget {
 }
 
 class _FiltersBar extends StatelessWidget {
+  final String selectedFilter;
+  final Function(String) onFilterChanged;
+
+  const _FiltersBar({
+    required this.selectedFilter,
+    required this.onFilterChanged,
+  });
+
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: const [
-        _Chip(label: 'All', selected: true),
-        SizedBox(width: 8),
-        _Chip(label: 'Open'),
-        SizedBox(width: 8),
-        _Chip(label: 'In Progress'),
-        SizedBox(width: 8),
-        _Chip(label: 'Resolved'),
-      ],
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
+        children: [
+          _Chip(
+            label: 'All',
+            selected: selectedFilter == 'All',
+            onTap: () => onFilterChanged('All'),
+          ),
+          const SizedBox(width: 8),
+          _Chip(
+            label: 'Open',
+            selected: selectedFilter == 'Open',
+            onTap: () => onFilterChanged('Open'),
+          ),
+          const SizedBox(width: 8),
+          _Chip(
+            label: 'In Progress',
+            selected: selectedFilter == 'In Progress',
+            onTap: () => onFilterChanged('In Progress'),
+          ),
+          const SizedBox(width: 8),
+          _Chip(
+            label: 'Resolved',
+            selected: selectedFilter == 'Resolved',
+            onTap: () => onFilterChanged('Resolved'),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -79,141 +172,35 @@ class _FiltersBar extends StatelessWidget {
 class _Chip extends StatelessWidget {
   final String label;
   final bool selected;
-
-  const _Chip({required this.label, this.selected = false});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: BoxDecoration(
-        color: selected
-            ? AppPalette.primaryColor.withOpacity(0.1)
-            : AppPalette.whiteColor,
-        border: Border.all(
-          color: selected ? AppPalette.primaryColor : AppPalette.borderColor,
-        ),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: selected ? AppPalette.primaryColor : AppPalette.textColor,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
-
-class _ComplaintListItem extends StatelessWidget {
-  final String title;
-  final String department;
-  final String priority;
-  final String status;
-  final String time;
   final VoidCallback onTap;
 
-  const _ComplaintListItem({
-    required this.title,
-    required this.department,
-    required this.priority,
-    required this.status,
-    required this.time,
+  const _Chip({
+    required this.label,
+    this.selected = false,
     required this.onTap,
   });
 
-  Color _statusColor() {
-    switch (status) {
-      case 'Resolved':
-        return Colors.green;
-      case 'In Progress':
-        return Colors.orange;
-      default:
-        return Colors.red;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: AppPalette.whiteColor,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppPalette.borderColor, width: 1),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.04),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          color: selected
+              ? AppPalette.primaryColor.withOpacity(0.1)
+              : AppPalette.whiteColor,
+          border: Border.all(
+            color: selected ? AppPalette.primaryColor : AppPalette.borderColor,
+          ),
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: AppPalette.textColor,
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 4,
-                  ),
-                  decoration: BoxDecoration(
-                    color: _statusColor().withOpacity(0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    status,
-                    style: TextStyle(
-                      color: _statusColor(),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.apartment_outlined,
-                  size: 16,
-                  color: AppPalette.greyColor,
-                ),
-                const SizedBox(width: 6),
-                Text(department, style: TextStyle(color: AppPalette.greyColor)),
-                const SizedBox(width: 12),
-                Icon(
-                  Icons.flag_outlined,
-                  size: 16,
-                  color: AppPalette.greyColor,
-                ),
-                const SizedBox(width: 6),
-                Text(priority, style: TextStyle(color: AppPalette.greyColor)),
-                const Spacer(),
-                Icon(Icons.access_time, size: 16, color: AppPalette.greyColor),
-                const SizedBox(width: 6),
-                Text(time, style: TextStyle(color: AppPalette.greyColor)),
-              ],
-            ),
-          ],
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? AppPalette.primaryColor : AppPalette.textColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

@@ -3,8 +3,23 @@ import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/widgets/appbar.dart';
 import 'package:get/get.dart';
 
-class ComplaintDetailsScreen extends StatelessWidget {
+class ComplaintDetailsScreen extends StatefulWidget {
   const ComplaintDetailsScreen({super.key});
+
+  @override
+  State<ComplaintDetailsScreen> createState() => _ComplaintDetailsScreenState();
+}
+
+class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
+  final String complaintId = Get.arguments;
+  late String currentStatus;
+
+  @override
+  void initState() {
+    super.initState();
+    final complaintData = _getComplaintData();
+    currentStatus = complaintData['status'] as String;
+  }
 
   Color _statusColor(String status) {
     switch (status) {
@@ -17,9 +32,238 @@ class ComplaintDetailsScreen extends StatelessWidget {
     }
   }
 
+  // Mock data based on complaint ID
+  Map<String, dynamic> _getComplaintData() {
+    final idNum =
+        int.tryParse(complaintId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
+
+    final statuses = ['Open', 'In Progress', 'Resolved'];
+    final priorities = ['Low', 'Medium', 'High'];
+    final departments = ['IT Department', 'Facilities', 'HR', 'Finance'];
+    final titles = [
+      'Network Issues in Department',
+      'Air Conditioning Not Working',
+      'Printers Not Functioning',
+      'Software License Renewal',
+      'Hardware Replacement Needed',
+    ];
+    final descriptions = [
+      'The network in our department has been unstable for the past week. We are experiencing frequent disconnections and slow internet speeds, which is affecting our productivity. We have tried restarting the router but the issue persists.',
+      'The air conditioning unit in the main conference room has stopped working. The temperature is uncomfortably warm during meetings.',
+      'All printers on the 3rd floor are offline and unable to connect to the network. This is causing delays in document processing.',
+      'Our department software licenses are expiring next week and need to be renewed urgently to avoid service interruption.',
+      'Several computers in the marketing department need hardware upgrades as they are running very slowly and affecting work efficiency.',
+    ];
+
+    return {
+      'status': statuses[idNum % statuses.length],
+      'priority': priorities[idNum % priorities.length],
+      'department': departments[idNum % departments.length],
+      'title': titles[idNum % titles.length],
+      'description': descriptions[idNum % descriptions.length],
+      'submittedDaysAgo': (idNum % 5) + 1,
+    };
+  }
+
+  void _showStatusChangeDialog() {
+    final statuses = ['Open', 'In Progress', 'Resolved'];
+    String selectedStatus = currentStatus;
+
+    Get.dialog(
+      Dialog(
+        backgroundColor: AppPalette.whiteColor,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppPalette.primaryColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.update,
+                      color: AppPalette.primaryColor,
+                      size: 24,
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Update Status',
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: AppPalette.textColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Change complaint status',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: AppPalette.greyColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              StatefulBuilder(
+                builder: (context, setDialogState) {
+                  return Column(
+                    children: statuses.map((status) {
+                      final isSelected = selectedStatus == status;
+                      final color = _statusColor(status);
+
+                      return GestureDetector(
+                        onTap: () {
+                          setDialogState(() {
+                            selectedStatus = status;
+                          });
+                        },
+                        child: Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 12),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? color.withOpacity(0.1)
+                                : AppPalette.backgroundColor,
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: isSelected
+                                  ? color
+                                  : AppPalette.borderColor,
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: color.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: Icon(
+                                  status == 'Resolved'
+                                      ? Icons.check_circle_outline
+                                      : status == 'In Progress'
+                                      ? Icons.schedule_outlined
+                                      : Icons.radio_button_unchecked,
+                                  color: color,
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  status,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: isSelected
+                                        ? color
+                                        : AppPalette.textColor,
+                                  ),
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  color: color,
+                                  size: 20,
+                                ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: () => Get.back(),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppPalette.greyColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: () {
+                        setState(() {
+                          currentStatus = selectedStatus;
+                        });
+                        Get.back();
+                        Get.snackbar(
+                          'Success',
+                          'Status updated to $selectedStatus',
+                          snackPosition: SnackPosition.BOTTOM,
+                          backgroundColor: Colors.green.shade100,
+                          colorText: Colors.green.shade800,
+                          margin: const EdgeInsets.all(16),
+                          borderRadius: 12,
+                          icon: Icon(
+                            Icons.check_circle,
+                            color: Colors.green.shade600,
+                          ),
+                        );
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppPalette.primaryColor,
+                        foregroundColor: AppPalette.whiteColor,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: const Text(
+                        'Update',
+                        style: TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    const status = 'In Progress';
+    final complaintData = _getComplaintData();
+
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
       appBar: const CustomAppBar(
@@ -33,6 +277,17 @@ class ComplaintDetailsScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // Header showing complaint ID
+              Text(
+                'Complaint #$complaintId',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: AppPalette.greyColor,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(height: 8),
+
               // Header card
               Container(
                 width: double.infinity,
@@ -60,13 +315,15 @@ class ComplaintDetailsScreen extends StatelessWidget {
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: _statusColor(status).withOpacity(0.12),
+                            color: _statusColor(
+                              currentStatus,
+                            ).withOpacity(0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
-                            status.toUpperCase(),
+                            currentStatus.toUpperCase(),
                             style: TextStyle(
-                              color: _statusColor(status),
+                              color: _statusColor(currentStatus),
                               fontWeight: FontWeight.w800,
                               fontSize: 12,
                             ),
@@ -80,7 +337,7 @@ class ComplaintDetailsScreen extends StatelessWidget {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Submitted: 2 days ago',
+                          'Created: ${complaintData['submittedDaysAgo']} days ago',
                           style: TextStyle(
                             color: AppPalette.greyColor,
                             fontSize: 12,
@@ -88,30 +345,41 @@ class ComplaintDetailsScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        _buildTag('Complaint', AppPalette.primaryColor),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            'Network Issues in Department',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                              color: AppPalette.textColor,
-                            ),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 16),
+                    Text(
+                      complaintData['title'] as String,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppPalette.textColor,
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        _buildTag('IT Department', AppPalette.secondaryColor),
-                        const SizedBox(width: 8),
-                        _buildTag('High Priority', AppPalette.errorColor),
-                      ],
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: complaintData['priority'] == 'High'
+                            ? AppPalette.errorColor.withOpacity(0.12)
+                            : complaintData['priority'] == 'Medium'
+                            ? Colors.orange.withOpacity(0.12)
+                            : Colors.blue.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${complaintData['priority']} Priority',
+                        style: TextStyle(
+                          color: complaintData['priority'] == 'High'
+                              ? AppPalette.errorColor
+                              : complaintData['priority'] == 'Medium'
+                              ? Colors.orange
+                              : Colors.blue,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                        ),
+                      ),
                     ),
                   ],
                 ),
@@ -130,7 +398,7 @@ class ComplaintDetailsScreen extends StatelessWidget {
                   border: Border.all(color: AppPalette.borderColor, width: 1),
                 ),
                 child: Text(
-                  'The network in our department has been unstable for the past week. We are experiencing frequent disconnections and slow internet speeds, which is affecting our productivity. We have tried restarting the router but the issue persists.',
+                  complaintData['description'] as String,
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -141,82 +409,19 @@ class ComplaintDetailsScreen extends StatelessWidget {
 
               const SizedBox(height: 16),
 
-              // Assignee
-              _SectionHeader(title: 'Assigned To'),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppPalette.whiteColor,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppPalette.borderColor, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    const CircleAvatar(
-                      radius: 22,
-                      backgroundImage: NetworkImage(
-                        'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=774&q=80',
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'John Smith',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppPalette.textColor,
-                          ),
-                        ),
-                        Text(
-                          'IT Support Staff',
-                          style: TextStyle(
-                            color: AppPalette.greyColor,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const Spacer(),
-                    OutlinedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                      label: const Text('Message'),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: AppPalette.primaryColor),
-                        foregroundColor: AppPalette.primaryColor,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
               // Timeline
               _SectionHeader(title: 'Activity Timeline'),
               _TimelineItem(
                 icon: Icons.assignment_turned_in_outlined,
-                color: Colors.green,
-                title: 'Status changed to IN PROGRESS',
-                time: '2 hours ago',
-              ),
-              _TimelineItem(
-                icon: Icons.person_add_alt_1_outlined,
-                color: AppPalette.secondaryColor,
-                title: 'Assigned to John Smith (IT Support)',
-                time: '1 day ago',
+                color: _statusColor(currentStatus),
+                title: 'Status changed to ${currentStatus.toUpperCase()}',
+                time: '${complaintData['submittedDaysAgo'] - 1} days ago',
               ),
               _TimelineItem(
                 icon: Icons.send_outlined,
                 color: AppPalette.primaryColor,
                 title: 'Complaint submitted',
-                time: '2 days ago',
+                time: '${complaintData['submittedDaysAgo']} days ago',
               ),
 
               const SizedBox(height: 16),
@@ -227,7 +432,17 @@ class ComplaintDetailsScreen extends StatelessWidget {
                 children: [
                   _SectionHeader(title: 'Comments'),
                   TextButton.icon(
-                    onPressed: () {},
+                    onPressed: () {
+                      Get.snackbar(
+                        'Feature Coming Soon',
+                        'Comment functionality will be available in the next update',
+                        snackPosition: SnackPosition.BOTTOM,
+                        backgroundColor: Colors.blue.shade100,
+                        colorText: Colors.blue.shade800,
+                        margin: const EdgeInsets.all(16),
+                        borderRadius: 12,
+                      );
+                    },
                     icon: const Icon(Icons.add_comment_outlined, size: 18),
                     label: const Text('Add Comment'),
                     style: TextButton.styleFrom(
@@ -237,58 +452,40 @@ class ComplaintDetailsScreen extends StatelessWidget {
                 ],
               ),
               _CommentItem(
-                name: 'John Smith',
-                time: '1 day ago',
+                name: 'Support Team',
+                time: '${complaintData['submittedDaysAgo'] - 1} days ago',
                 comment:
-                    'We are looking into the issue. Have you tried connecting to the backup network?',
+                    'We have received your complaint and are reviewing the details. We will get back to you soon with an update.',
                 avatarUrl:
                     'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=774&q=80',
               ),
               _CommentItem(
                 name: 'You',
-                time: '12 hours ago',
+                time: '${complaintData['submittedDaysAgo']} days ago',
                 comment:
-                    'Yes, we tried the backup network but it\'s also unstable. The issue seems to be affecting the entire floor.',
+                    'The issue started occurring suddenly without any changes to our setup. Please look into this urgently.',
                 avatarUrl:
                     'https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?auto=format&fit=crop&w=2070&q=80',
               ),
 
               const SizedBox(height: 24),
 
-              // Bottom actions
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () => Get.back(),
-                      icon: const Icon(Icons.arrow_back),
-                      label: const Text('Back'),
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+              // Bottom action
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => Get.back(),
+                  icon: const Icon(Icons.arrow_back),
+                  label: const Text('Back to List'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    side: BorderSide(color: AppPalette.primaryColor),
+                    foregroundColor: AppPalette.primaryColor,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {},
-                      icon: const Icon(Icons.flag_outlined),
-                      label: const Text('Escalate'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppPalette.primaryColor,
-                        foregroundColor: AppPalette.whiteColor,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ],
           ),

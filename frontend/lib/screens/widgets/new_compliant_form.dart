@@ -45,6 +45,7 @@ void showComplaintDialog() {
   final titleController = TextEditingController();
   final descriptionController = TextEditingController();
   String selectedCategory = 'IT Department';
+  String selectedPriority = 'Medium'; // Default priority
   bool isSubmitting = false;
 
   final complaintController = Get.put(ComplaintFormController());
@@ -72,6 +73,27 @@ void showComplaintDialog() {
     },
     {'value': 'Security', 'icon': Icons.security_outlined, 'color': Colors.red},
     {'value': 'Other', 'icon': Icons.help_outline, 'color': Colors.grey},
+  ];
+
+  final priorities = [
+    {
+      'value': 'High',
+      'icon': Icons.error_outline,
+      'color': AppPalette.errorColor,
+      'description': 'Critical issue requiring immediate attention',
+    },
+    {
+      'value': 'Medium',
+      'icon': Icons.warning_outlined,
+      'color': AppPalette.accentColor,
+      'description': 'Important issue that should be addressed soon',
+    },
+    {
+      'value': 'Low',
+      'icon': Icons.info_outline,
+      'color': AppPalette.successColor,
+      'description': 'Minor issue that can be addressed later',
+    },
   ];
 
   Get.dialog(
@@ -273,6 +295,113 @@ void showComplaintDialog() {
                                 },
                               ),
                             ),
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          // Priority Selection
+                          Text(
+                            'Priority Level',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.grey.shade800,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'How urgent is this issue?',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          // Priority Cards
+                          Column(
+                            children: priorities.map((priority) {
+                              final isSelected =
+                                  selectedPriority == priority['value'];
+                              final color = priority['color'] as Color;
+                              final description =
+                                  priority['description'] as String;
+
+                              return GestureDetector(
+                                onTap: () {
+                                  setState(() {
+                                    selectedPriority =
+                                        priority['value'] as String;
+                                  });
+                                },
+                                child: Container(
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.only(bottom: 12),
+                                  padding: const EdgeInsets.all(16),
+                                  decoration: BoxDecoration(
+                                    color: isSelected
+                                        ? color.withOpacity(0.1)
+                                        : Colors.grey.shade50,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: isSelected
+                                          ? color
+                                          : Colors.grey.shade300,
+                                      width: isSelected ? 2 : 1,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        padding: const EdgeInsets.all(8),
+                                        decoration: BoxDecoration(
+                                          color: color.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                        child: Icon(
+                                          priority['icon'] as IconData,
+                                          color: color,
+                                          size: 20,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              priority['value'] as String,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.w600,
+                                                color: color,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              description,
+                                              style: TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey.shade600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      if (isSelected)
+                                        Icon(
+                                          Icons.check_circle_rounded,
+                                          color: color,
+                                          size: 20,
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            }).toList(),
                           ),
 
                           const SizedBox(height: 24),
@@ -545,7 +674,6 @@ void showComplaintDialog() {
                       Expanded(
                         child: OutlinedButton(
                           onPressed: isSubmitting ? null : () => Get.back(),
-
                           child: Text(
                             'Cancel',
                             style: TextStyle(
@@ -566,6 +694,23 @@ void showComplaintDialog() {
                                     setState(() {
                                       isSubmitting = true;
                                     });
+
+                                    // Collect all form data
+                                    final complaintData = {
+                                      'title': titleController.text,
+                                      'department': selectedCategory,
+                                      'priority': selectedPriority,
+                                      'phone': complaintController
+                                          .phoneController
+                                          .text,
+                                      'email': complaintController
+                                          .emailController
+                                          .text,
+                                      'description': descriptionController.text,
+                                      'timestamp': DateTime.now(),
+                                    };
+
+                                    print('Complaint Data: $complaintData');
 
                                     await Future.delayed(
                                       const Duration(seconds: 2),
@@ -591,7 +736,6 @@ void showComplaintDialog() {
                                     );
                                   }
                                 },
-
                           child: isSubmitting
                               ? const SizedBox(
                                   height: 24,
