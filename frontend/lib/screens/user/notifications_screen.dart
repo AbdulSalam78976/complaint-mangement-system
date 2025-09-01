@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/widgets/appbar.dart';
-import 'package:frontend/screens/widgets/notifications_dialogue.dart' as dialog;
+import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/notifications_dialogue.dart'
+    as dialog;
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});

@@ -9,11 +9,17 @@ class RouteName {
   static const String userDashboard = '/user-dashboard';
   static const String complaintListScreen = '/complaint-list-screen';
 
-  // New user screens
+  // User screens
   static const String complaintFormScreen = '/complaint-form-screen';
   static const String complaintDetailsScreen = '/complaint-details-screen';
   static const String notificationsScreen = '/notifications-screen';
   static const String settingsScreen = '/settings-screen';
   static const String profileScreen = '/profile-screen';
   static const String complaintTrackingScreen = '/complaint-tracking-screen';
+
+  // Admin screens
+  static const String adminDashboard = '/admin-dashboard';
+  static const String adminComplaintManagement = '/admin-complaint-management';
+  static const String adminUserManagement = '/admin-user-management';
+  static const String adminReports = '/admin-reports';
 }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/widgets/appbar.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:get/get.dart';
 
 class ComplaintDetailsScreen extends StatefulWidget {
@@ -11,13 +11,21 @@ class ComplaintDetailsScreen extends StatefulWidget {
 }
 
 class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
-  final String complaintId = Get.arguments;
+  late Map<String, dynamic> complaintData;
+  late bool isAdminView;
   late String currentStatus;
+  final TextEditingController _commentController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    final complaintData = _getComplaintData();
+
+    // Get arguments passed from navigation
+    final Map<String, dynamic> arguments =
+        Get.arguments as Map<String, dynamic>;
+    complaintData = arguments['complaint'] as Map<String, dynamic>;
+    isAdminView = arguments['isAdminView'] as bool;
+
     currentStatus = complaintData['status'] as String;
   }
 
@@ -26,47 +34,36 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
       case 'Resolved':
         return Colors.green;
       case 'In Progress':
+        return Colors.blue;
+      case 'Rejected':
+        return Colors.red;
+      case 'Pending':
         return Colors.orange;
       default:
-        return Colors.red;
+        return Colors.grey;
     }
   }
 
-  // Mock data based on complaint ID
-  Map<String, dynamic> _getComplaintData() {
-    final idNum =
-        int.tryParse(complaintId.replaceAll(RegExp(r'[^0-9]'), '')) ?? 1;
-
-    final statuses = ['Open', 'In Progress', 'Resolved'];
-    final priorities = ['Low', 'Medium', 'High'];
-    final departments = ['IT Department', 'Facilities', 'HR', 'Finance'];
-    final titles = [
-      'Network Issues in Department',
-      'Air Conditioning Not Working',
-      'Printers Not Functioning',
-      'Software License Renewal',
-      'Hardware Replacement Needed',
-    ];
-    final descriptions = [
-      'The network in our department has been unstable for the past week. We are experiencing frequent disconnections and slow internet speeds, which is affecting our productivity. We have tried restarting the router but the issue persists.',
-      'The air conditioning unit in the main conference room has stopped working. The temperature is uncomfortably warm during meetings.',
-      'All printers on the 3rd floor are offline and unable to connect to the network. This is causing delays in document processing.',
-      'Our department software licenses are expiring next week and need to be renewed urgently to avoid service interruption.',
-      'Several computers in the marketing department need hardware upgrades as they are running very slowly and affecting work efficiency.',
-    ];
-
-    return {
-      'status': statuses[idNum % statuses.length],
-      'priority': priorities[idNum % priorities.length],
-      'department': departments[idNum % departments.length],
-      'title': titles[idNum % titles.length],
-      'description': descriptions[idNum % descriptions.length],
-      'submittedDaysAgo': (idNum % 5) + 1,
-    };
+  IconData _statusIcon(String status) {
+    switch (status) {
+      case 'Resolved':
+        return Icons.check_circle;
+      case 'In Progress':
+        return Icons.sync;
+      case 'Rejected':
+        return Icons.cancel;
+      case 'Pending':
+        return Icons.pending;
+      default:
+        return Icons.help_outline;
+    }
   }
 
   void _showStatusChangeDialog() {
-    final statuses = ['Open', 'In Progress', 'Resolved'];
+    final statuses = isAdminView
+        ? ['Pending', 'In Progress', 'Resolved', 'Rejected']
+        : ['Open', 'In Progress', 'Resolved'];
+
     String selectedStatus = currentStatus;
 
     Get.dialog(
@@ -157,11 +154,7 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Icon(
-                                  status == 'Resolved'
-                                      ? Icons.check_circle_outline
-                                      : status == 'In Progress'
-                                      ? Icons.schedule_outlined
-                                      : Icons.radio_button_unchecked,
+                                  _statusIcon(status),
                                   color: color,
                                   size: 20,
                                 ),
@@ -260,16 +253,39 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
     );
   }
 
+  void _addComment() {
+    if (_commentController.text.trim().isEmpty) return;
+
+    // Add comment logic here
+    final newComment = {
+      'text': _commentController.text,
+      'author': isAdminView ? 'Admin' : 'You',
+      'time': 'Just now',
+      'avatar': isAdminView
+          ? 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=500&q=80'
+          : 'https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?auto=format&fit=crop&w=500&q=80',
+    };
+
+    setState(() {
+      if (complaintData['comments'] == null) {
+        complaintData['comments'] = [];
+      }
+      (complaintData['comments'] as List).insert(0, newComment);
+    });
+
+    _commentController.clear();
+    FocusScope.of(context).unfocus();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final complaintData = _getComplaintData();
-
     return Scaffold(
       backgroundColor: AppPalette.backgroundColor,
-      appBar: const CustomAppBar(
+      appBar: CustomAppBar(
         title: 'Complaint Details',
         showBack: true,
         showLogo: false,
+        isAdmin: isAdminView,
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -279,7 +295,7 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
             children: [
               // Header showing complaint ID
               Text(
-                'Complaint #$complaintId',
+                'Complaint #${complaintData['id'] ?? 'N/A'}',
                 style: TextStyle(
                   fontSize: 14,
                   color: AppPalette.greyColor,
@@ -320,13 +336,23 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                             ).withOpacity(0.12),
                             borderRadius: BorderRadius.circular(8),
                           ),
-                          child: Text(
-                            currentStatus.toUpperCase(),
-                            style: TextStyle(
-                              color: _statusColor(currentStatus),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 12,
-                            ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                _statusIcon(currentStatus),
+                                size: 14,
+                                color: _statusColor(currentStatus),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                currentStatus.toUpperCase(),
+                                style: TextStyle(
+                                  color: _statusColor(currentStatus),
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                         const Spacer(),
@@ -337,7 +363,7 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          'Created: ${complaintData['submittedDaysAgo']} days ago',
+                          'Created: ${complaintData['submittedDaysAgo'] ?? 0} days ago',
                           style: TextStyle(
                             color: AppPalette.greyColor,
                             fontSize: 12,
@@ -347,7 +373,7 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      complaintData['title'] as String,
+                      complaintData['title'] as String? ?? 'No Title',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
@@ -355,37 +381,48 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: complaintData['priority'] == 'High'
-                            ? AppPalette.errorColor.withOpacity(0.12)
-                            : complaintData['priority'] == 'Medium'
-                            ? Colors.orange.withOpacity(0.12)
-                            : Colors.blue.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '${complaintData['priority']} Priority',
-                        style: TextStyle(
-                          color: complaintData['priority'] == 'High'
-                              ? AppPalette.errorColor
-                              : complaintData['priority'] == 'Medium'
-                              ? Colors.orange
-                              : Colors.blue,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 12,
+                    Row(
+                      children: [
+                        _buildTag(
+                          '${complaintData['priority'] ?? 'Unknown'} Priority',
+                          _getPriorityColor(complaintData['priority'] ?? ''),
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        _buildTag(
+                          complaintData['department'] as String? ?? 'Unknown',
+                          AppPalette.primaryColor,
+                        ),
+                      ],
                     ),
                   ],
                 ),
               ),
 
               const SizedBox(height: 16),
+
+              // Status update button for admin
+              if (isAdminView)
+                Column(
+                  children: [
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _showStatusChangeDialog,
+                        icon: const Icon(Icons.update),
+                        label: const Text('Update Status'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppPalette.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
 
               // Description
               _SectionHeader(title: 'Description'),
@@ -398,7 +435,8 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
                   border: Border.all(color: AppPalette.borderColor, width: 1),
                 ),
                 child: Text(
-                  complaintData['description'] as String,
+                  complaintData['description'] as String? ??
+                      'No description provided',
                   style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
@@ -412,61 +450,98 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
               // Timeline
               _SectionHeader(title: 'Activity Timeline'),
               _TimelineItem(
-                icon: Icons.assignment_turned_in_outlined,
+                icon: _statusIcon(currentStatus),
                 color: _statusColor(currentStatus),
                 title: 'Status changed to ${currentStatus.toUpperCase()}',
-                time: '${complaintData['submittedDaysAgo'] - 1} days ago',
+                time:
+                    '${(complaintData['submittedDaysAgo'] ?? 1) - 1} days ago',
               ),
               _TimelineItem(
                 icon: Icons.send_outlined,
                 color: AppPalette.primaryColor,
                 title: 'Complaint submitted',
-                time: '${complaintData['submittedDaysAgo']} days ago',
+                time: '${complaintData['submittedDaysAgo'] ?? 0} days ago',
               ),
 
               const SizedBox(height: 16),
 
-              // Comments
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _SectionHeader(title: 'Comments'),
-                  TextButton.icon(
-                    onPressed: () {
-                      Get.snackbar(
-                        'Feature Coming Soon',
-                        'Comment functionality will be available in the next update',
-                        snackPosition: SnackPosition.BOTTOM,
-                        backgroundColor: Colors.blue.shade100,
-                        colorText: Colors.blue.shade800,
-                        margin: const EdgeInsets.all(16),
-                        borderRadius: 12,
-                      );
-                    },
-                    icon: const Icon(Icons.add_comment_outlined, size: 18),
-                    label: const Text('Add Comment'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppPalette.primaryColor,
+              // Comments section
+              _SectionHeader(title: 'Comments'),
+
+              // Add comment input
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppPalette.whiteColor,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: AppPalette.borderColor, width: 1),
+                ),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _commentController,
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: 'Add a comment...',
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.all(8),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: ElevatedButton(
+                        onPressed: _addComment,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppPalette.primaryColor,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 8,
+                          ),
+                        ),
+                        child: const Text('Post Comment'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              // Comments list
+              if (complaintData['comments'] != null &&
+                  (complaintData['comments'] as List).isNotEmpty)
+                Column(
+                  children: (complaintData['comments'] as List)
+                      .map<Widget>(
+                        (comment) => _CommentItem(
+                          name: comment['author'] ?? 'Unknown',
+                          time: comment['time'] ?? '',
+                          comment: comment['text'] ?? '',
+                          avatarUrl: comment['avatar'] ?? '',
+                        ),
+                      )
+                      .toList(),
+                )
+              else
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppPalette.whiteColor,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: AppPalette.borderColor, width: 1),
+                  ),
+                  child: Center(
+                    child: Text(
+                      'No comments yet',
+                      style: TextStyle(
+                        color: AppPalette.greyColor,
+                        fontStyle: FontStyle.italic,
+                      ),
                     ),
                   ),
-                ],
-              ),
-              _CommentItem(
-                name: 'Support Team',
-                time: '${complaintData['submittedDaysAgo'] - 1} days ago',
-                comment:
-                    'We have received your complaint and are reviewing the details. We will get back to you soon with an update.',
-                avatarUrl:
-                    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=774&q=80',
-              ),
-              _CommentItem(
-                name: 'You',
-                time: '${complaintData['submittedDaysAgo']} days ago',
-                comment:
-                    'The issue started occurring suddenly without any changes to our setup. Please look into this urgently.',
-                avatarUrl:
-                    'https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?auto=format&fit=crop&w=2070&q=80',
-              ),
+                ),
 
               const SizedBox(height: 24),
 
@@ -510,6 +585,19 @@ class _ComplaintDetailsScreenState extends State<ComplaintDetailsScreen> {
         ),
       ),
     );
+  }
+
+  Color _getPriorityColor(String priority) {
+    switch (priority.toLowerCase()) {
+      case 'high':
+        return Colors.red;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return Colors.green;
+      default:
+        return AppPalette.greyColor;
+    }
   }
 }
 

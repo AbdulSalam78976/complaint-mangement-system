@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:frontend/screens/widgets/token_expiry_dialogue.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/token_expiry_dialogue.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

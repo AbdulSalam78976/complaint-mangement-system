@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/widgets/new_compliant_form.dart';
-import 'package:frontend/screens/widgets/appbar.dart';
-import 'package:frontend/screens/widgets/complaint_card.dart';
-import 'package:frontend/screens/widgets/overview_card.dart';
-import 'package:frontend/screens/widgets/quickaction_card.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/new_compliant_form.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/complaint_card.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/overview_card.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/quickaction_card.dart';
 import 'package:get/get.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 
@@ -167,8 +167,6 @@ class _UserDashboardState extends State<UserDashboard>
                                       value: '24',
                                       icon: Icons.receipt_long_outlined,
                                       color: AppPalette.whiteColor,
-                                      backgroundColor: AppPalette.whiteColor
-                                          .withOpacity(0.15),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -178,8 +176,6 @@ class _UserDashboardState extends State<UserDashboard>
                                       value: '8',
                                       icon: Icons.schedule_outlined,
                                       color: AppPalette.whiteColor,
-                                      backgroundColor: AppPalette.whiteColor
-                                          .withOpacity(0.15),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -189,8 +185,6 @@ class _UserDashboardState extends State<UserDashboard>
                                       value: '16',
                                       icon: Icons.check_circle_outline,
                                       color: AppPalette.whiteColor,
-                                      backgroundColor: AppPalette.whiteColor
-                                          .withOpacity(0.15),
                                     ),
                                   ),
                                   const SizedBox(width: 12),
@@ -200,8 +194,6 @@ class _UserDashboardState extends State<UserDashboard>
                                       value: '2.4 hrs',
                                       icon: Icons.speed_outlined,
                                       color: AppPalette.whiteColor,
-                                      backgroundColor: AppPalette.whiteColor
-                                          .withOpacity(0.15),
                                     ),
                                   ),
                                 ],
@@ -218,8 +210,6 @@ class _UserDashboardState extends State<UserDashboard>
                                           value: '24',
                                           icon: Icons.receipt_long_outlined,
                                           color: AppPalette.whiteColor,
-                                          backgroundColor: AppPalette.whiteColor
-                                              .withOpacity(0.15),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -229,8 +219,6 @@ class _UserDashboardState extends State<UserDashboard>
                                           value: '8',
                                           icon: Icons.schedule_outlined,
                                           color: AppPalette.whiteColor,
-                                          backgroundColor: AppPalette.whiteColor
-                                              .withOpacity(0.15),
                                         ),
                                       ),
                                     ],
@@ -244,8 +232,6 @@ class _UserDashboardState extends State<UserDashboard>
                                           value: '16',
                                           icon: Icons.check_circle_outline,
                                           color: AppPalette.whiteColor,
-                                          backgroundColor: AppPalette.whiteColor
-                                              .withOpacity(0.15),
                                         ),
                                       ),
                                       const SizedBox(width: 12),
@@ -255,8 +241,6 @@ class _UserDashboardState extends State<UserDashboard>
                                           value: '2.4 hrs',
                                           icon: Icons.speed_outlined,
                                           color: AppPalette.whiteColor,
-                                          backgroundColor: AppPalette.whiteColor
-                                              .withOpacity(0.15),
                                         ),
                                       ),
                                     ],

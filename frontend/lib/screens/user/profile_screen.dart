@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/widgets/appbar.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});

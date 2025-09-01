@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/widgets/help_dialogue.dart';
-import 'package:frontend/screens/widgets/logout_dialogue.dart';
-import 'package:frontend/screens/widgets/notifications_dialogue.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/help_dialogue.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/logout_dialogue.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/notifications_dialogue.dart';
 import 'package:get/get.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 
 // Custom AppBar with notifications and profile menu
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
+  final bool isAdmin;
   final bool showLogo;
   final int notificationCount;
   final String profileImageUrl;
@@ -20,6 +21,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? semanticTitle;
 
   const CustomAppBar({
+    this.isAdmin = false,
     Key? key,
     this.title = '',
     this.showLogo = true,
@@ -101,10 +103,14 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               const Spacer(),
 
             // Notification icon with badge
-            if (showNotifications) _buildNotificationIcon(context),
+            if (showNotifications)
+              isAdmin ? const SizedBox() : _buildNotificationIcon(context),
 
-            // Profile menu
-            if (showProfile) _buildProfileMenu(context),
+            // Show logout button for admin, profile menu for regular users
+            if (showProfile)
+              isAdmin
+                  ? _buildAdminLogoutButton(context)
+                  : _buildProfileMenu(context),
           ],
         ),
       ),
@@ -162,6 +168,33 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAdminLogoutButton(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: 'Admin logout button',
+      child: Container(
+        margin: const EdgeInsets.only(left: 8),
+        decoration: BoxDecoration(
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 3),
+            ),
+          ],
+          color: AppPalette.errorColor.withOpacity(0.9),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: IconButton(
+          onPressed: showLogoutDialog,
+          icon: Icon(Icons.logout_rounded, color: Colors.white, size: 26),
+          tooltip: 'Logout',
+        ),
       ),
     );
   }

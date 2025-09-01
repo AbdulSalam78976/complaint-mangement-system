@@ -6,7 +6,7 @@ class OverviewCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-  final Color backgroundColor;
+
   final double? width;
   final double? height;
   final EdgeInsets? padding;
@@ -21,7 +21,7 @@ class OverviewCard extends StatelessWidget {
     required this.value,
     required this.icon,
     required this.color,
-    required this.backgroundColor,
+
     this.width,
     this.height,
     this.padding,
@@ -38,7 +38,7 @@ class OverviewCard extends StatelessWidget {
       height: height,
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: backgroundColor,
+        color: AppPalette.whiteColor.withOpacity(0.1),
         borderRadius: borderRadius ?? BorderRadius.circular(16),
         border: Border.all(
           color: AppPalette.whiteColor.withOpacity(0.2),

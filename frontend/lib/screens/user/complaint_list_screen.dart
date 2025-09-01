@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/widgets/appbar.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
-import 'package:frontend/screens/widgets/complaint_card.dart';
-import 'package:frontend/screens/widgets/new_compliant_form.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/complaint_card.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/new_compliant_form.dart';
 import 'package:get/get.dart';
 
 class ComplaintListScreen extends StatefulWidget {

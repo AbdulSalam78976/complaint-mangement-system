@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:get/get.dart';
-import 'package:frontend/screens/widgets/appbar.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
