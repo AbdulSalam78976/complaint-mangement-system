@@ -23,7 +23,7 @@ const UserSchema = Joi.object({
 
   // Password hash stored in DB (required at schema level, 
   // but in login we will use raw "password" field instead)
-  passwordHash: Joi.string().required().messages({
+  password: Joi.string().required().messages({
     'string.empty': 'Password is required',
     'any.required': 'Password is required'
   }),
@@ -55,7 +55,7 @@ const UserSchema = Joi.object({
 const UserRegistrationSchema = UserSchema.keys({
   name: Joi.string().trim().required(),
   email: Joi.string().email().lowercase().trim().required(),
-  passwordHash: Joi.string().required()
+  password: Joi.string().required()
 });
 
 
@@ -69,7 +69,7 @@ const UserRegistrationSchema = UserSchema.keys({
 const UserUpdateSchema = UserSchema.keys({
   name: Joi.string().trim(),
   email: Joi.string().email().lowercase().trim(),
-  passwordHash: Joi.string(),
+  password: Joi.string(),
   role: Joi.string().valid('user', 'admin')
 }).min(1);
 

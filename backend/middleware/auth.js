@@ -7,8 +7,9 @@ const auth = (required = true) => async (req, res, next) => {
   if (!token) {
     if (required) return res.status(401).json({ message: 'Missing token' });
     req.user = null;
-    return next();
+  
   }
+  
 
   try {
     // Verify token

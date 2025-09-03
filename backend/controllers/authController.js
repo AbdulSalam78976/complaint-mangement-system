@@ -3,7 +3,7 @@ import User from "../models/user.js";
 import hash from "../utils/hashing.js";
 import jwt from "jsonwebtoken";
 import sendMail from "../middleware/sendmail.js";
-import { UserLoginSchema,UserRegistrationSchema } from "../middleware/validate.js";
+import { UserLoginSchema,UserRegistrationSchema, UserUpdateSchema } from "../middleware/validate.js";
 /**
  * Handles user registration
  * 1. Validates input using Joi
@@ -235,7 +235,7 @@ const verifyVerificationCode = async (req, res) => {
     
     try {
         // 1. Input validation
-        const { error } = acceptCodeSchema.validate({ email, verificationCode });
+        const { error } = UserUpdateSchema.validate({ email, verificationCode });
         if (error) {
             return res.status(400).json({ 
                 error: error.details[0].message,

@@ -32,7 +32,7 @@ app.listen(PORT, () => console.log(`🚀 Backend listening on http://localhost:$
         console.error("MongoDB connection error:", error);
     });
 
-app.get('/health', (_, res) => res.json({ ok: true }));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/admin', adminRoutes);

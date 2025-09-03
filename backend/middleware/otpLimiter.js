@@ -5,4 +5,5 @@ const resendOtpLimiter = rateLimit({
   message: { error: 'Too many resend attempts from this IP, try again later.' }
 });
 
+
 export default resendOtpLimiter;

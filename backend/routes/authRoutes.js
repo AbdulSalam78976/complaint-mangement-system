@@ -1,16 +1,22 @@
-import { router } from 'express';
-import { signUp, logIn, logOut, verifyVerificationCode, resendVerificationCode, changePassword, sendForgetPasswordCode, verifyForgetPasswordCode } from '../controllers/authController.js';
+import {Router}  from 'express';
+import * as authController from '../controllers/authController.js';
 import { auth } from '../middleware/auth.js';
-import { resendOtpLimiter } from '../middleware/otpLimiter.js';
-
-router.post('/register',signUp);
-router.patch('/register/verify-verification-code', verifyVerificationCode);
-router.post('/register/resend-verification-code', resendOtpLimiter,resendVerificationCode);
-
-router.post('/login', logIn);
-router.post('/logout', auth,logOut);
+import resendOtpLimiter from '../middleware/otpLimiter.js';
 
 
-router.patch('/change-password', authenticateUser, changePassword);
-router.patch('/reset-password/send-forgetPassword-code',resendOtpLimiter, sendForgetPasswordCode);
-router.patch('/reset-password/verify-forgetPassword-code', verifyForgetPasswordCode);
+const router = Router();
+router.post('/register', authController.signUp);
+router.patch('/register/verify-verification-code', authController.verifyVerificationCode);
+router.post('/register/resend-verification-code', resendOtpLimiter,authController.resendVerificationCode);
+
+router.post('/login', authController.logIn);
+router.post('/logout', auth,authController.logOut);
+
+
+router.patch('/change-password', auth, authController.changePassword);
+router.patch('/reset-password/send-forgetPassword-code',resendOtpLimiter, authController.sendForgetPasswordCode);
+router.patch('/reset-password/verify-forgetPassword-code', authController.verifyForgetPasswordCode);
+
+
+
+export default router;
