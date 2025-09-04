@@ -2,7 +2,6 @@ class RouteName {
   static const String splashScreen = '/splash-screen';
   static const String loginScreen = '/login-screen';
   static const String signupScreen = '/signup-screen';
-  static const String emailVerificationScreen = '/email-verification-screen';
   static const String forgetPasswordScreen = '/forget-password-screen';
   static const String resetPasswordScreen = '/reset-password-screen';
   static const String staffDashboard = '/staff-dashboard';

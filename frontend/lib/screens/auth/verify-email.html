@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Email Verification</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #2c7be5, #4e54c8);
+      color: #333;
+    }
+    .card {
+      width: 90%;
+      max-width: 450px;
+      background: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+      text-align: center;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    h2 {
+      margin: 15px 0;
+      font-size: 24px;
+      font-weight: bold;
+      color: #2c7be5;
+    }
+    p {
+      font-size: 16px;
+      color: #555;
+      margin-bottom: 20px;
+      line-height: 1.5;
+    }
+    .success { color: #28a745; font-size: 20px; font-weight: bold; }
+    .error { color: #dc3545; font-size: 20px; font-weight: bold; }
+    .btn {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 8px;
+      background: #2c7be5;
+      color: #fff;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.3s ease;
+      text-decoration: none;
+    }
+    .btn:hover { background: #1b5bbf; }
+    .lottie {
+      width: 180px;
+      height: 180px;
+      margin: 0 auto 10px;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card" id="content">
+    <div class="lottie" id="lottie-animation"></div>
+    <h2>Verifying your email...</h2>
+    <p>Please wait a moment.</p>
+  </div>
+
+  <!-- Lottie Web Script -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
+  <script>
+  async function verifyEmail() {
+    const params = new URLSearchParams(window.location.search);
+    const status = params.get("status");
+    const content = document.getElementById("content");
+    const lottieContainer = document.getElementById("lottie-animation");
+
+    if (status === "success") {
+      lottie.loadAnimation({
+        container: lottieContainer,
+        renderer: 'svg',
+        loop: false,
+        autoplay: true,
+        path: "https://assets2.lottiefiles.com/packages/lf20_jbrw3hcz.json" // ✅ success animation
+      });
+      content.innerHTML = `
+        <div class="lottie" id="lottie-animation"></div>
+        <h2 class="success">✅ Email Verified!</h2>
+        <p>Your email has been successfully verified. You can now log in.</p>
+        <a href="http://127.0.0.1:5500/lib/screens/auth/login.html" class="btn">Go to Login</a>
+      `;
+    } else {
+      lottie.loadAnimation({
+        container: lottieContainer,
+        renderer: 'svg',
+        loop: false,
+        autoplay: true,
+        path: "https://assets2.lottiefiles.com/packages/lf20_j1adxtyb.json" // ❌ error animation
+      });
+      content.innerHTML = `
+        <div class="lottie" id="lottie-animation"></div>
+        <h2 class="error">❌ Verification Failed</h2>
+        <p>The link may have expired or already been used.</p>
+      `;
+    }
+  }
+
+  verifyEmail();
+</script>
+
+</body>
+</html>

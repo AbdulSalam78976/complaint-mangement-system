@@ -2,9 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:frontend/resources/routes/routes.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/app_theme.dart';
+import 'package:frontend/utils/sessionmanager.dart';
 import 'package:get/get.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await SessionManager.init();
+
   runApp(const MyApp());
 }
 
@@ -19,7 +24,7 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme,
       // initialBinding: AppBinding(),
-      initialRoute: RouteName.adminDashboard,
+      initialRoute: RouteName.splashScreen,
       getPages: AppRoutes.appRoutes(),
     );
   }

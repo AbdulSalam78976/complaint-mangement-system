@@ -1,9 +1,57 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/data/api_service.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
+import 'package:frontend/utils/sessionmanager.dart';
+import 'package:frontend/utils/utils.dart';
 import 'package:get/get.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 void showLogoutDialog() {
+  Future<void> logout() async {
+    // Show loading dialog
+    Get.dialog(
+      const Center(child: CircularProgressIndicator()),
+      barrierDismissible: false,
+    );
+
+    try {
+      final token = await SessionManager.getToken();
+      if (token == null) {
+        Get.back(); // close loading
+        Get.offAllNamed(RouteName.loginScreen);
+        return;
+      }
+
+      final decoded = JwtDecoder.decode(token);
+      final email = decoded['email'];
+      if (email == null) throw Exception('Email not found in token');
+
+      final api = ApiService();
+      final result = await api.post('/auth/logout', {
+        "email": email,
+      }, requireAuth: true);
+
+      if (result.isSuccess) {
+        await SessionManager.clearToken();
+        Utils.snackBar(title: 'Success', message: 'Logged out successfully');
+        // close loading
+        Get.offAllNamed(RouteName.loginScreen);
+      } else {
+        Get.back(); // close loading
+        Utils.snackBar(
+          title: 'Error',
+          message: result.errorMessage ?? 'Logout failed',
+        );
+        debugPrint("Logout error: ${result.errorMessage}");
+      }
+    } catch (e) {
+      Get.back(); // close loading
+      debugPrint("Logout error: $e");
+      Utils.snackBar(title: 'Error', message: 'Logout failed');
+    }
+  }
+
   Get.dialog(
     AlertDialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
@@ -53,10 +101,7 @@ void showLogoutDialog() {
           ),
         ),
         ElevatedButton(
-          onPressed: () {
-            Get.back();
-            Get.offAllNamed(RouteName.loginScreen);
-          },
+          onPressed: logout,
           style: ElevatedButton.styleFrom(
             backgroundColor: AppPalette.errorColor,
             foregroundColor: AppPalette.whiteColor,

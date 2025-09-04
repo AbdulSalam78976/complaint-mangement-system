@@ -3,7 +3,6 @@ import 'package:frontend/screens/admin/admin_complaint_management.dart';
 import 'package:frontend/screens/admin/admin_dashboard.dart';
 import 'package:frontend/screens/admin/admin_reports.dart';
 import 'package:frontend/screens/admin/admin_user_management.dart';
-import 'package:frontend/screens/auth/email_verification_screen.dart';
 import 'package:frontend/screens/auth/login_screen.dart';
 import 'package:frontend/screens/auth/signup_screen.dart';
 import 'package:frontend/screens/auth/splash_screen.dart';
@@ -30,12 +29,7 @@ class AppRoutes {
       transitionDuration: Duration(milliseconds: 250),
       transition: Transition.leftToRightWithFade,
     ),
-    GetPage(
-      name: RouteName.emailVerificationScreen,
-      page: () => EmailVerificationScreen(),
-      transitionDuration: Duration(milliseconds: 250),
-      transition: Transition.leftToRightWithFade,
-    ),
+
     GetPage(
       name: RouteName.loginScreen,
       page: () => LoginScreen(),

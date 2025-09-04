@@ -18,8 +18,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     // ✅ Navigation after delay
     Future.delayed(const Duration(seconds: 2), () async {
-      if (await SessionManager.isLoggedIn()) {
-        Get.offNamed(RouteName.userDashboard);
+      final isLoggedIn = await SessionManager.isLoggedIn();
+      if (isLoggedIn) {
+        await SessionManager.navigateBasedOnRole();
       } else {
         Get.offNamed(RouteName.loginScreen);
       }

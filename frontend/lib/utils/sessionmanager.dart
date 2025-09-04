@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
+import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/token_expiry_dialogue.dart';
+import 'package:get/get.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -9,8 +12,11 @@ class SessionManager {
 
   /// Save token & start expiry watcher
   static Future<void> saveToken(String token) async {
+    debugPrint("Saving token: $token");
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_tokenKey, token);
+
+    debugPrint("Saved token: ${prefs.getString(_tokenKey)}");
 
     _startExpiryWatcher(token);
   }
@@ -71,11 +77,33 @@ class SessionManager {
     showTokenExpiryDialogue();
   }
 
+  static Future<dynamic> decodeToken() async {
+    final token = await getToken();
+    if (token != null) {
+      final decodedToken = JwtDecoder.decode(token);
+      debugPrint("decoded token: $decodedToken");
+      return decodedToken;
+    }
+  }
+
   /// Call this once at app startup to restore watcher
   static Future<void> init() async {
     final token = await getToken();
     if (token != null) {
       _startExpiryWatcher(token);
+    }
+  }
+
+  static Future<void> navigateBasedOnRole() async {
+    final decoded = await decodeToken();
+    final role = decoded?['role'];
+
+    if (role == 'user') {
+      Get.offNamed(RouteName.userDashboard);
+    } else if (role == 'admin') {
+      Get.offNamed(RouteName.adminDashboard);
+    } else {
+      Get.offNamed(RouteName.loginScreen);
     }
   }
 }

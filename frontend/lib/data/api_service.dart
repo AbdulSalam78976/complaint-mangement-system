@@ -6,7 +6,7 @@ import 'package:frontend/utils/sessionmanager.dart';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String baseUrl = "http://192.168.1.10:8080/api";
+  final String baseUrl = "http://localhost:4000/api";
 
   // ✅ Common headers
   Future<Map<String, String>> _getHeaders({
@@ -134,9 +134,9 @@ class ApiService {
   Future<ApiResult<dynamic>> upload(
     String endpoint,
     Map<String, String> fields, {
-    io.File? file,
-    Uint8List? fileBytes,
-    String? fileName,
+    List<io.File>? files,
+    List<Uint8List>? fileBytesList,
+    List<String>? fileNames,
     String fileField = "file",
   }) async {
     try {
@@ -146,18 +146,31 @@ class ApiService {
       var request = http.MultipartRequest('POST', url)..headers.addAll(headers);
       request.fields.addAll(fields);
 
-      if (file != null) {
-        request.files.add(
-          await http.MultipartFile.fromPath(fileField, file.path),
-        );
-      } else if (fileBytes != null) {
-        request.files.add(
-          http.MultipartFile.fromBytes(
-            fileField,
-            fileBytes,
-            filename: fileName ?? 'upload.bin',
-          ),
-        );
+      // Handle multiple files from File objects
+      if (files != null && files.isNotEmpty) {
+        for (var file in files) {
+          request.files.add(
+            await http.MultipartFile.fromPath(fileField, file.path),
+          );
+        }
+      }
+
+      // Handle multiple files from bytes
+      if (fileBytesList != null && fileBytesList.isNotEmpty) {
+        for (int i = 0; i < fileBytesList.length; i++) {
+          final fileBytes = fileBytesList[i];
+          final fileName = fileNames != null && i < fileNames.length
+              ? fileNames[i]
+              : 'upload_${i + 1}.bin';
+
+          request.files.add(
+            http.MultipartFile.fromBytes(
+              fileField,
+              fileBytes,
+              filename: fileName,
+            ),
+          );
+        }
       }
 
       final streamedResponse = await request.send();
@@ -182,7 +195,21 @@ class ApiService {
     if (status >= 200 && status < 300) {
       return ApiResult.success(body != null ? jsonDecode(body) : null);
     } else {
-      return ApiResult.failure("API Error ($status): $body");
+      String? message;
+      try {
+        // Try parsing error body if JSON
+        final decoded = body != null ? jsonDecode(body) : null;
+        if (decoded is Map && decoded['message'] != null) {
+          message = decoded['message'].toString();
+        }
+      } catch (_) {
+        message = body; // fallback to raw body
+      }
+
+      return ApiResult.failure(
+        message ?? "Unexpected error",
+        statusCode: status,
+      );
     }
   }
 }

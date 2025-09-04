@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/controllers/auth%20controller/signup_controller.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:frontend/utils/utils.dart';
 import 'package:get/get.dart';
 
@@ -167,6 +166,9 @@ class SignupScreen extends StatelessWidget {
                 }
                 if (value.length < 6) {
                   return 'Password must be at least 6 characters';
+                }
+                if (!Utils.passwordRegex.hasMatch(value)) {
+                  return 'Password must contain uppercase, lowercase, and a number';
                 }
                 return null;
               },

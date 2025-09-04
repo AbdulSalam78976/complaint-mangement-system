@@ -31,4 +31,6 @@ class Utils {
   static bool isEmail(String email) {
     return GetUtils.isEmail(email);
   }
+
+  static final passwordRegex = RegExp(r'^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$');
 }

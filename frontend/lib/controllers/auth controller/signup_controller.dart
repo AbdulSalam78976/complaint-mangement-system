@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:frontend/resources/routes/routes_names.dart';
+import 'package:frontend/data/api_service.dart';
+import 'package:frontend/screens/auth/signup_sucess_dialogue.dart';
 import 'package:get/get.dart';
 
 class SignupController extends GetxController {
+  final api = ApiService();
   // Text Controllers
   final nameController = TextEditingController();
   final emailController = TextEditingController();
@@ -20,32 +22,49 @@ class SignupController extends GetxController {
 
   // Validation for signup fields
 
-  // Signup logic (dummy API/Firebase)
   Future<void> signup() async {
     try {
       isLoading.value = true;
 
-      // Simulate API request
-      await Future.delayed(const Duration(seconds: 2));
+      final result = await api.post('/auth/register', {
+        'name': nameController.text.trim(),
+        'email': emailController.text.trim(),
+        'password': passwordController.text.trim(),
+      }, requireAuth: false);
 
-      Get.toNamed(
-        RouteName.emailVerificationScreen,
-        arguments: {'email': emailController.text.trim()},
-      );
-      // On success
-      Get.snackbar(
-        "Success",
-        "Account created successfully!",
-        snackPosition: SnackPosition.BOTTOM,
-      );
-
-      // Navigate to Login (or Home)
-      Get.offAllNamed('/login');
+      if (result.isSuccess) {
+        // ✅ Only show dialog, don't navigate here
+        showSignupSuccessDialog();
+      } else {
+        if (result.statusCode == 409) {
+          // 409 Conflict → email already exists
+          Get.snackbar(
+            "Signup Failed",
+            "This email is already registered. Please use another one.",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.orange.shade400,
+            colorText: Colors.white,
+            margin: const EdgeInsets.all(12),
+          );
+        } else {
+          Get.snackbar(
+            "Signup Failed",
+            result.errorMessage ?? "Signup failed",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.red.shade400,
+            colorText: Colors.white,
+            margin: const EdgeInsets.all(12),
+          );
+        }
+      }
     } catch (e) {
       Get.snackbar(
         "Error",
         "Signup failed: $e",
         snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red.shade400,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
       );
     } finally {
       isLoading.value = false;

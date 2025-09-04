@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:frontend/controllers/auth%20controller/login_controller.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
-import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:frontend/utils/utils.dart';
 import 'package:get/get.dart';
 

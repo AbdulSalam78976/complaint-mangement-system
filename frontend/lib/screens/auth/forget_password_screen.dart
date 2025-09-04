@@ -113,14 +113,6 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
     }
   }
 
-  void _goBack() {
-    if (emailExists.value) {
-      emailExists.value = false;
-    } else {
-      Get.back();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -388,11 +380,7 @@ class _ForgetPasswordScreenState extends State<ForgetPasswordScreen> {
                     : _checkEmail,
                 child: isLoading.value
                     ? const CircularProgressIndicator(color: Colors.white)
-                    : Text(
-                        emailExists.value
-                            ? "Reset Password"
-                            : "Send Reset Link",
-                      ),
+                    : Text("Reset Password"),
               ),
             ),
             const SizedBox(height: 20),
