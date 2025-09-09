@@ -137,7 +137,7 @@ class ApiService {
     List<io.File>? files,
     List<Uint8List>? fileBytesList,
     List<String>? fileNames,
-    String fileField = "file",
+    String fileField = "attachments", // Change default to "attachments"
   }) async {
     try {
       final url = Uri.parse('$baseUrl$endpoint');
@@ -150,7 +150,10 @@ class ApiService {
       if (files != null && files.isNotEmpty) {
         for (var file in files) {
           request.files.add(
-            await http.MultipartFile.fromPath(fileField, file.path),
+            await http.MultipartFile.fromPath(
+              fileField,
+              file.path,
+            ), // Use fileField
           );
         }
       }
@@ -165,7 +168,7 @@ class ApiService {
 
           request.files.add(
             http.MultipartFile.fromBytes(
-              fileField,
+              fileField, // Use fileField
               fileBytes,
               filename: fileName,
             ),

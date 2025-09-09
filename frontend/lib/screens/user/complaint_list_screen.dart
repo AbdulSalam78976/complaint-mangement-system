@@ -105,7 +105,11 @@ class _ComplaintListScreenState extends State<ComplaintListScreen> {
                           description: complaint['description'] ?? '',
                           onTap: () => Get.toNamed(
                             RouteName.complaintDetailsScreen,
-                            arguments: complaint['id'],
+                            arguments: {
+                              'complaint': complaint,
+                              'isAdminView': false,
+                              'status': complaint['status'],
+                            },
                           ),
                         );
                       },

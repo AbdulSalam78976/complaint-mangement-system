@@ -1,12 +1,10 @@
 import 'dart:io';
-
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'package:frontend/data/api_service.dart';
 import 'package:frontend/utils/utils.dart';
-import 'package:get/get.dart';
 import 'package:frontend/resources/theme/colors.dart';
-
-import 'package:file_picker/file_picker.dart';
 
 class AddNewComplaintController extends GetxController {
   // Form key
@@ -112,6 +110,11 @@ class AddNewComplaintController extends GetxController {
     }
   }
 
+  // Remove file from attachments
+  void removeFile(PlatformFile file) {
+    attachments.remove(file);
+  }
+
   bool get isFormValid => phoneError.value.isEmpty && emailError.value.isEmpty;
 
   Future<void> submitComplaint() async {
@@ -129,28 +132,59 @@ class AddNewComplaintController extends GetxController {
       try {
         isSubmitting.value = true;
 
+        // Convert PlatformFile to File objects for upload
+        List<File> filesToUpload = [];
+        List<String> fileNames = [];
+
+        for (var attachment in attachments) {
+          if (attachment.path != null) {
+            filesToUpload.add(File(attachment.path!));
+            fileNames.add(attachment.name);
+          }
+        }
+
+        // Check if we have too many files
+        if (filesToUpload.length > 5) {
+          Utils.snackBar(
+            title: 'Error',
+            message: 'Maximum 5 attachments allowed',
+          );
+          isSubmitting.value = false;
+          return;
+        }
+
         final result = await api.upload(
           '/complaints/create',
           fields,
-          files: attachments.map((file) => File(file.path!)).toList() ?? [],
+          files: filesToUpload,
+          fileNames: fileNames,
+          fileField: 'attachments', // Explicitly set the field name
         );
 
         if (result.isSuccess) {
+          Get.back();
+
+          isSubmitting.value = false;
           Utils.snackBar(
             title: 'Success',
-            message: "Complaint submitted successfully",
+            message:
+                "Complaint submitted successfully. We'll get back to you soon",
           );
-          isSubmitting.value = false;
-          Get.back();
         } else {
+          Get.back();
+
+          isSubmitting.value = false;
           Utils.snackBar(
             title: 'Error',
             message: result.errorMessage ?? "Failed to submit complaint",
           );
-          isSubmitting.value = false;
         }
       } catch (e) {
-        Utils.snackBar(title: 'Error', message: "Failed to submit complaint");
+        Get.back();
+        Utils.snackBar(
+          title: 'Error',
+          message: "Failed to submit complaint: ${e.toString()}",
+        );
         isSubmitting.value = false;
       }
     }
