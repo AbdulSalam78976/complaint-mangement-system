@@ -1,41 +1,48 @@
 import jwt from 'jsonwebtoken';
-// Authentication middleware
-const auth = (required = true) => async (req, res, next) => {
-  const hdr = req.headers.authorization || '';
-  const token = hdr.startsWith('Bearer ') ? hdr.slice(7) : null;
-
-  if (!token) {
-    if (required) return res.status(401).json({ message: 'Missing token' });
-    req.user = null;
-  
-  }
-  
-
+import createError from 'http-errors';
+import User from '../models/user.js';
+const auth = async (req, res, next) => {
   try {
-    // Verify token
+    // 1. Check if Authorization header exists
+    const authHeader = req.get('Authorization');
+    if (!authHeader) throw createError(401, 'Unauthorized');
+
+    // 2. Split header into type and token (e.g., "Bearer eyJhbGciOi...")
+    const [type, token] = authHeader.split(' ');
+    if (type !== 'Bearer' || !token) throw createError(401, 'Unauthorized');
+
+    // 3. Verify the JWT token using the secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Option A: Just attach decoded token
-    // req.user = decoded;
+    // 4. Fetch complete user data from database (excluding password)
+    const user = await User.findById(decoded.userId).select('-password');
+    if (!user) throw createError(403, 'Forbidden');
 
-    // Option B (safer): Fetch fresh user from DB
-    const user = await User.findById(decoded.id).select('-passwordHash');
-    if (!user) return res.status(401).json({ message: 'User not found' });
-
+    // 5. Attach user object to request for use in subsequent middleware/routes
     req.user = user;
+    
+    // 6. Proceed to next middleware/route
     next();
-  } catch (err) {
-    return res.status(401).json({ message: 'Invalid or expired token' });
+  } catch (error) {
+    next(error);
   }
 };
 
-// Role-based access control
-const permit = (...roles) => (req, res, next) => {
-  if (!req.user) return res.status(401).json({ message: 'Unauthorized' });
-  if (!roles.includes(req.user.role)) {
-    return res.status(403).json({ message: 'Forbidden' });
-  }
-  next();
+const permit = (...roles) => {
+  return (req, res, next) => {
+    try {
+      // 1. Check if user is authenticated
+      if (!req.user) throw createError(401, 'Unauthorized');
+      
+      // 2. Check if user's role is in the allowed roles list
+      if (!roles.includes(req.user.role)) throw createError(403, 'Forbidden');
+      
+      // 3. Allow access if role is permitted
+      next();
+    } catch (error) {
+      next(error);
+    }
+  };
 };
 
 export { auth, permit };

@@ -52,11 +52,14 @@ const UserSchema = Joi.object({
  * Used when a new user registers.
  * Requires: name, email, passwordHash
  */
-const UserRegistrationSchema = UserSchema.keys({
+const UserRegistrationSchema = Joi.object({
   name: Joi.string().trim().required(),
   email: Joi.string().email().lowercase().trim().required(),
-  password: Joi.string().required()
-});
+  password: Joi.string()
+    .min(8)
+    .pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).+$'))
+    .required()
+}).options({ stripUnknown: true });
 
 
 /**

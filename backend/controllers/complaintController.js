@@ -1,26 +1,55 @@
 import mongoose from 'mongoose';
 import Complaint from '../models/complaint.js';
 import User from '../models/user.js';
+import * as Validator from '../middleware/ComplaintValidator.js';
 
-export const createComplaint = async (req, res) => {
+// ---------------- Create Complaint ----------------
+const createComplaint = async (req, res) => {
   try {
-    const { title, description, category = 'other', priority = 'medium' } = req.body;
-    if (!title || !description) return res.status(400).json({ error: 'title, description required' });
 
+    // Validate request body using Joi
+    const { error, value } = Validator.createComplaintValidator.validate(req.body, { abortEarly: false });
+    if (error) {
+      const errors = error.details.map((detail) => detail.message);
+      return res.status(400).json({ errors });
+    }
+
+    const { title, description, category, priority, phone, email } = value;
+
+    
+    // Handle multiple attachments
+    const attachments = req.files ? req.files.map(file => file.path) : [];
+    
+    console.log('Uploaded files:', req.files); // Debug: see uploaded files
+
+    // Create the complaint
     const complaint = await Complaint.create({
-      title, description, category, priority, createdBy: req.user.sub,
+      title,
+      description,
+      category,
+      priority,
+      phone,
+      email,
+      attachments,
+      createdBy: req.user._id, // user ID from auth middleware
     });
+
     res.status(201).json({ complaint });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Could not create complaint' });
   }
 };
 
-export const listComplaints = async (req, res) => {
+
+
+// ---------------- List Complaints ----------------
+const listComplaints = async (req, res) => {
   try {
     const { status, category, priority, q, page = 1, limit = 10 } = req.query;
     const skip = (Number(page) - 1) * Number(limit);
     const filter = {};
+
     if (status) filter.status = status;
     if (category) filter.category = category;
     if (priority) filter.priority = priority;
@@ -28,7 +57,12 @@ export const listComplaints = async (req, res) => {
     if (req.user.role === 'user') filter.createdBy = req.user.sub;
     else if (req.user.role === 'staff') filter.$or = [{ assignedTo: req.user.sub }, { assignedTo: null }];
 
-    if (q) filter.$or = [{ title: { $regex: q, $options: 'i' } }, { description: { $regex: q, $options: 'i' } }];
+    if (q) filter.$or = [
+      { title: { $regex: q, $options: 'i' } },
+      { description: { $regex: q, $options: 'i' } },
+      { phone: { $regex: q, $options: 'i' } },
+      { email: { $regex: q, $options: 'i' } }
+    ];
 
     const [items, total] = await Promise.all([
       Complaint.find(filter)
@@ -42,11 +76,13 @@ export const listComplaints = async (req, res) => {
 
     res.json({ items, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Failed to list complaints' });
   }
 };
 
-export const getComplaint = async (req, res) => {
+// ---------------- Get Single Complaint ----------------
+const getComplaint = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid ID' });
@@ -57,14 +93,18 @@ export const getComplaint = async (req, res) => {
       .populate('comments.author', 'name email role');
 
     if (!doc) return res.status(404).json({ error: 'Not found' });
-    if (req.user.role === 'user' && String(doc.createdBy._id) !== req.user.sub) return res.status(403).json({ error: 'Forbidden' });
+    if (req.user.role === 'user' && String(doc.createdBy._id) !== req.user.sub)
+      return res.status(403).json({ error: 'Forbidden' });
+
     res.json({ complaint: doc });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Failed to fetch complaint' });
   }
 };
 
-export const updateComplaint = async (req, res) => {
+// ---------------- Update Complaint ----------------
+const updateComplaint = async (req, res) => {
   try {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid ID' });
@@ -75,27 +115,35 @@ export const updateComplaint = async (req, res) => {
     const isOwner = String(doc.createdBy) === req.user.sub;
     const isStaffOrAdmin = ['staff', 'admin'].includes(req.user.role);
 
-    const { title, description, status, assignedTo, priority, category } = req.body;
+    const { title, description, status, assignedTo, priority, category, phone, email, attachments } = req.body;
 
-    if (title !== undefined || description !== undefined || category !== undefined || priority !== undefined) {
+    // Owner/staff can update basic fields
+    if (title !== undefined || description !== undefined || category !== undefined || priority !== undefined || phone !== undefined || email !== undefined || attachments !== undefined) {
       if (!isOwner && !isStaffOrAdmin) return res.status(403).json({ error: 'Forbidden' });
+
       if (title !== undefined) doc.title = String(title).trim() || doc.title;
       if (description !== undefined) doc.description = String(description);
       if (category !== undefined) doc.category = category;
       if (priority !== undefined) doc.priority = priority;
+      if (phone !== undefined) doc.phone = phone;
+      if (email !== undefined) doc.email = email;
+      if (attachments !== undefined) doc.attachments = attachments;
     }
 
+    // Only staff/admin can update status
     if (status !== undefined) {
       if (!isStaffOrAdmin) return res.status(403).json({ error: 'Only staff/admin can change status' });
       doc.status = status;
     }
 
+    // Only staff/admin can assign
     if (assignedTo !== undefined) {
       if (!isStaffOrAdmin) return res.status(403).json({ error: 'Only staff/admin can reassign' });
       if (assignedTo === null) doc.assignedTo = null;
       else if (mongoose.Types.ObjectId.isValid(assignedTo)) {
         const assignee = await User.findById(assignedTo);
-        if (!assignee || !['staff', 'admin'].includes(assignee.role)) return res.status(400).json({ error: 'Assigned user must be staff/admin' });
+        if (!assignee || !['staff', 'admin'].includes(assignee.role))
+          return res.status(400).json({ error: 'Assigned user must be staff/admin' });
         doc.assignedTo = assignee._id;
       } else return res.status(400).json({ error: 'Invalid assignedTo value' });
     }
@@ -108,11 +156,13 @@ export const updateComplaint = async (req, res) => {
 
     res.json({ complaint: populated });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Update failed' });
   }
 };
 
-export const addComment = async (req, res) => {
+// ---------------- Add Comment ----------------
+const addComment = async (req, res) => {
   try {
     const { id } = req.params;
     const { body, visibility = 'public' } = req.body;
@@ -135,11 +185,13 @@ export const addComment = async (req, res) => {
     const populated = await Complaint.findById(doc._id).populate('comments.author', 'name email role');
     res.status(201).json({ comments: populated.comments });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Could not add comment' });
   }
 };
 
-export const statsSummary = async (req, res) => {
+// ---------------- Stats Summary ----------------
+const statsSummary = async (req, res) => {
   try {
     const grouped = await Complaint.aggregate([
       { $group: { _id: { status: '$status', category: '$category' }, count: { $sum: 1 } } },
@@ -151,6 +203,16 @@ export const statsSummary = async (req, res) => {
     ]);
     res.json({ grouped, totals });
   } catch (e) {
+    console.error(e);
     res.status(500).json({ error: 'Failed to compute stats' });
   }
+};
+
+export {
+  createComplaint,
+  statsSummary,
+  addComment,
+  updateComplaint,
+  getComplaint,
+  listComplaints,
 };

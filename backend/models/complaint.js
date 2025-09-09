@@ -2,11 +2,12 @@ import mongoose from 'mongoose';
 
 const { Schema, model, Types } = mongoose;
 
+// Optional comment schema for future use
 const CommentSchema = new Schema({
   author: { type: Types.ObjectId, ref: 'User', required: true },
   body: { type: String, required: true, trim: true },
   visibility: { type: String, enum: ['public', 'internal'], default: 'public' },
-  isAdmin: { type: Boolean, default: false }, // ✅ helps identify admin comments
+  isAdmin: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
 }, { _id: false });
 
@@ -16,15 +17,15 @@ const ComplaintSchema = new Schema({
 
   category: { 
     type: String, 
-    enum: ['it', 'hr', 'finance', 'facilities', 'other'], 
-    default: 'other', 
-    index: true 
+    enum: ['IT Department', 'HR Department', 'Finance', 'Facilities', 'Security', 'Other'], 
+    default: 'Other',
+    index: true
   },
 
   priority: { 
     type: String, 
-    enum: ['low', 'medium', 'high', 'urgent'], 
-    default: 'medium' 
+    enum: ['Low', 'Medium', 'High'], 
+    default: 'Medium' 
   },
 
   status: { 
@@ -34,15 +35,18 @@ const ComplaintSchema = new Schema({
     index: true 
   },
 
+  phone: { type: String, required: true, trim: true },
+  email: { type: String, required: true, trim: true },
+
   createdBy: { type: Types.ObjectId, ref: 'User', required: true, index: true }, // end user
-  resolvedBy: { type: Types.ObjectId, ref: 'User', default: null }, // ✅ admin who resolved
-  lastUpdatedBy: { type: Types.ObjectId, ref: 'User', default: null }, // ✅ track last actor
+  resolvedBy: { type: Types.ObjectId, ref: 'User', default: null }, // admin who resolved
+  lastUpdatedBy: { type: Types.ObjectId, ref: 'User', default: null }, // track last actor
 
   comments: [CommentSchema],
 
-  attachments: [{ type: String }], // ✅ store file URLs/paths
-  tags: [{ type: String, trim: true }], // ✅ for searching/filtering
-}, 
-{ timestamps: true });
+  attachments: [{ type: String }], // store file URLs/paths
+  tags: [{ type: String, trim: true }], // optional tags for searching/filtering
+
+}, { timestamps: true });
 
 export default model('Complaint', ComplaintSchema);

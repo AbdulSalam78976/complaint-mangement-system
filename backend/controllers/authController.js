@@ -1,590 +1,313 @@
-
 import User from "../models/user.js";
 import hash from "../utils/hashing.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import sendMail from "../middleware/sendmail.js";
-import { UserLoginSchema,UserRegistrationSchema, UserUpdateSchema } from "../middleware/validate.js";
+import { 
+  UserLoginSchema, 
+  UserRegistrationSchema 
+} from "../middleware/AuthValidator.js";
+
 /**
- * Handles user registration
- * 1. Validates input using Joi
- * 2. Checks for existing email
- * 3. Creates new user
+ * User Registration
  */
-let signUp = async (req, res) => {
-    try {
-        // 1. Validate request body
-        const { error } = UserRegistrationSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({ 
-                error: error.details[0].message 
-            });
-        }
-
-        // 2. Check for duplicate email
-        const existingUser = await User.findOne({ email: req.body.email });
-        if (existingUser) {
-            return res.status(409).json({
-                error: 'Email already registered' 
-            });
-        }
-
-        // 3. Hash password
-        const hashedPassword = await hash.hashData(req.body.password);
-        req.body.password = hashedPassword;
-
-        // 4. Create new user
-        const user = new User(req.body);
-
-        // 5. Generate secure verification code
-        const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-        user.verificationCode = verificationCode;
-        user.verificationCodeValidation = new Date(Date.now() + 15 * 60 * 1000); // 15 min expiry
-        user.verified = false;
-
-        await user.save();
-
-        // 6. Send verification email
-        const emailResult = await sendMail(
-            user.email,
-            'Verify Your Account',
-            `Welcome to our platform!\n\nYour verification code is: ${verificationCode}\n\nIt expires in 15 minutes.`,
-            `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2>Welcome, ${user.name}!</h2>
-                    <p>Thank you for signing up. To activate your account, use the code below:</p>
-                    <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-                        <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">
-                            ${verificationCode}
-                        </p>
-                    </div>
-                    <p>This code will expire in 15 minutes.</p>
-                    <p>If you didn’t create this account, you can ignore this email.</p>
-                </div>
-            `
-        );
-
-        if (!emailResult?.success) {
-            throw new Error('Failed to send verification email');
-        }
-
-        // 7. Return response (excluding sensitive fields)
-        res.status(201).json({
-            message: 'Registration successful. Verification code sent to your email.',
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email,
-                verified: user.verified
-            }
-        });
-
-    } catch (error) {
-        console.error('Signup Error:', error);
-        res.status(500).json({
-            error: 'Registration failed. Please try again.'
-        });
-    }
-};
-
-const resendVerificationCode = async (req, res) => {
-  const { email } = req.body;
-
+const signUp = async (req, res) => {
   try {
-    // 1. Find user
-    const user = await User.findOne({ email }).select("+verified");
-    if (!user) {
-      return res.status(404).json({ error: "Account not found" });
+    // 1. Validate
+    const { error } = UserRegistrationSchema.validate(req.body);
+    if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+
+    // 2. Check existing
+    if (await User.findOne({ email: req.body.email })) {
+      return res.status(409).json({ success: false, message: "Email already registered" });
     }
 
-    if (user.verified) {
-      return res.status(400).json({ error: "Email already verified" });
-    }
+    // 3. Hash password
+    const hashedPassword = await hash.hashData(req.body.password);
 
-    // 2. Generate new code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    user.verificationCode = verificationCode;
-    user.verificationCodeValidation = new Date(Date.now() + 15 * 60 * 1000); // 15 mins
+    // 4. Create user
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const user = new User({
+      ...req.body,
+      password: hashedPassword,
+      verified: false,
+      active: false,
+      verificationToken,
+      verificationExpires: new Date(Date.now() + 24 * 60 * 60 * 1000),
+    });
+
     await user.save();
 
-    // 3. Send email
-    const emailResult = await sendMail(
-      user.email,
-      "Resend Verification Code",
-      `Your new verification code is: ${verificationCode}\n\nIt expires in 15 minutes.`,
-      `
-        <div>
-          <h2>Hello, ${user.name}!</h2>
-          <p>You requested a new verification code. Use the code below:</p>
-          <div style="background:#f5f5f5; padding:20px; text-align:center; margin:20px 0;">
-            <p style="font-size:24px; font-weight:bold;">${verificationCode}</p>
+    // 5. Send verification email
+    const verifyUrl = `${process.env.CLIENT_URL}/auth/register/verify-email?token=${verificationToken}&id=${user._id}`;
+    await sendMail(
+        user.email,
+        "Verify Your Account",
+        `Click to verify: ${verifyUrl}`,
+        `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #333; text-align: center;">Welcome to Our App 🎉</h2>
+          <p style="font-size: 16px; color: #555;">
+            Hello <strong>${user.name}</strong>,
+          </p>
+          <p style="font-size: 15px; color: #555;">
+            Thank you for signing up! To complete your registration, please verify your email by clicking the button below:
+          </p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verifyUrl}" 
+              style="background: #4CAF50; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
+              Verify Email
+            </a>
           </div>
-          <p>This code will expire in 15 minutes.</p>
+          <p style="font-size: 14px; color: #777;">
+            If the button doesn’t work, copy and paste the following link into your browser:
+          </p>
+          <p style="font-size: 14px; word-break: break-all; color: #0066cc;">
+            ${verifyUrl}
+          </p>
+          <hr style="margin: 20px 0;" />
+          <p style="font-size: 12px; color: #999; text-align: center;">
+            If you didn’t sign up for this account, you can ignore this email.
+          </p>
         </div>
-      `
-    );
+        `
+      );
+      
 
-    if (!emailResult?.success) {
-      throw new Error("Failed to resend verification email");
-    }
+    res.status(201).json({ success: true, message: "Verification link sent to email." });
 
-    // 4. Response
-    res.status(200).json({
-      message: "Verification code resent successfully. Check your email.",
-    });
   } catch (error) {
-    console.error("Resend OTP Error:", error);
-    res.status(500).json({ error: "Could not resend verification code" });
+    console.error("Signup Error:", error);
+    res.status(500).json({ success: false, message: "Registration failed." });
   }
 };
 
 /**
- * Handles user login
- * 1. Finds user by email
- * 2. Validates credentials
- * 3. Returns user data (without password)
+ * Verify Email
+ */
+const verifyEmail = async (req, res) => {
+  try {
+    const { token, id } = req.query;
+
+    const user = await User.findOne({
+      _id: id,
+      verificationToken: token,
+      verificationExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return res.redirect("http://127.0.0.1:5500/lib/screens/auth/verify-email.html?status=failed");
+    }
+
+    user.verified = true;
+ 
+    user.verificationToken = undefined;
+    user.verificationExpires = undefined;
+    await user.save();
+
+    return res.redirect("http://127.0.0.1:5500/lib/screens/auth/verify-email.html?status=success");
+  } catch (error) {
+    console.error("Verification Error:", error);
+    return res.redirect("http://127.0.0.1:5500/lib/screens/auth/verify-email.html?status=failed");
+  }
+};
+
+
+/**
+ * Login
  */
 const logIn = async (req, res) => {
-    try {
-        // 1. Input validation
-        const { error } = UserLoginSchema.validate(req.body);
-        if (error) {
-            return res.status(400).json({ 
-                error: error.details[0].message 
-            });
-        }
+  try {
+    // 1. Validate request
+    const { error } = UserLoginSchema.validate(req.body);
+    if (error)
+      return res
+        .status(400)
+        .json({ success: false, message: error.details[0].message });
 
-        // 2. Find user with credentials
-        const user = await User.findOne({ email: req.body.email.trim() })
-                             .select('+password +verified');
-        
-        if (!user) {
-            return res.status(401).json({
-                error: 'Invalid Email' // Keep generic for security
-            });
-        }
+    // 2. Find user by email
+    const user = await User.findOne({ email: req.body.email }).select(
+      "+password"
+    );
+    if (!user)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
 
-        // 3. Email verification check
-        if (!user.verified) {
-            return res.status(403).json({
-                error: 'Please verify your email before logging in'
-            });
-        }
+    // 3. Ensure email is verified
+    if (!user.verified)
+      return res
+        .status(403)
+        .json({ success: false, message: "Verify your email first" });
 
-        // 4. Password validation
-        const isMatch = await hash.compareData(req.body.password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({
-                error: 'Invalid Password' // Same message as email check
-            });
-        }
+    // 4. Compare passwords
+    const validPass = await hash.compareData(req.body.password, user.password);
+    if (!validPass)
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
 
-        // 5. Token generation
-       // In your login controller
-// Where you create the token (login/signup)
-console.log('Creating token with payload:', {
-  userId: user._id,
-  verified: user.verified
-});
+    // 5. Generate JWT token
+    const token = jwt.sign(
+      {
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        verified: user.verified,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
-const token = jwt.sign(
-  {
-    userId: user._id.toString() // Explicit conversion
-  },
-  process.env.JWT_SECRET,
-  { expiresIn: '7d' }
-);
+    // 6. Set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
 
-        // 6. Set secure cookie
-        res.cookie('token', token, {
-            expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-            httpOnly: true, // Always httpOnly for security
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict' // CSRF protection
-        });
+    // 7. Mark user as active
+    user.active = true;
+    await user.save();
 
-        // 7. Final response
-        res.status(200).json({
-            token,
-            name: user.name,
-            email: user.email,
-            verified: user.verified
-            // Don't send token in body if using cookies
-        });
+   
 
-    } catch (error) {
-        console.error('Login Error:', error);
-        res.status(500).json({ 
-            error: 'Authentication service unavailable' 
-        });
-    }
+    // 9. Return response
+    res.json({
+      success: true,
+      message: "Login successful",
+      token,
+     
+    });
+  } catch (error) {
+    console.error("Login Error:", error);
+    res.status(500).json({ success: false, message: "Login failed" });
+  }
 };
+
 
 const logOut = async (req, res) => {
-    try {
-        res.clearCookie('token');
-        res.status(200).json({ message: 'Logout successful' , });
-    } catch (error) {
-        console.error('Logout Error:', error);
-        res.status(500).json({ error: 'Logout failed' });
+  try {
+    // Get user from auth middleware
+    const email = req.user.email;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
     }
+
+    // Optional: mark user inactive
+    user.active = false;
+    await user.save();
+
+    // Clear cookie (if using cookie-based auth)
+    res.clearCookie("token");
+
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (err) {
+    console.error("Logout error:", err);
+    res.status(500).json({ success: false, message: "Internal server error" });
+  }
 };
 
-
-const verifyVerificationCode = async (req, res) => {
-    const { email, verificationCode } = req.body;
-    
+// sendForgetPasswordCode.js
+const sendResetPasswordCode = async (req, res) => {
     try {
-        // 1. Input validation
-        const { error } = UserUpdateSchema.validate({ email, verificationCode });
-        if (error) {
-            return res.status(400).json({ 
-                error: error.details[0].message,
-                ...(process.env.NODE_ENV === 'development' && { details: error.details })
-            });
-        }
-
-        // 2. Find user with verification data
-        const user = await User.findOne({ email })
-            .select('+verificationCode +verificationCodeValidation +verified');
-        
-        if (!user) {
-            return res.status(404).json({ 
-                error: 'Account not found' 
-            });
-        }
-
-        // 3. Check verification status
-        if (user.verified) {
-            return res.status(409).json({ 
-                error: 'Email is already verified',
-                verifiedAt: user.updatedAt
-            });
-        }
-
-        // 4. Verify all code conditions
-        const codeValue = verificationCode.toString();
-        const currentTime = new Date();
-        
-        if (!user.verificationCode) {
-            return res.status(400).json({ error: 'No pending verification found' });
-        }
-
-        if (user.verificationCode !== codeValue) {
-            return res.status(401).json({ error: 'Invalid verification code' });
-        }
-
-        if (new Date(user.verificationCodeValidation) < currentTime) {
-            return res.status(410).json({ error: 'Verification code expired' });
-        }
-
-        // 5. Mark as verified and clean up
-        user.verified = true;
-        user.verifiedAt = currentTime;
-        user.verificationCode = undefined;
-        user.verificationCodeValidation = undefined;
-        await user.save();
-
-        // 6. Generate auth token (optional)
-        const authToken = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        // 7. Success response
-        res.status(200).json({
-            message: 'Email verified successfully',
-            authToken,
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email
-            }
+      const { email } = req.body;
+  
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+  
+      const user = await User.findOne({ email }).select("+verified");
+      if (!user) {
+        // Security: Don't reveal email existence
+        return res.status(200).json({
+          message: "If this email exists, a password reset code has been sent.",
         });
-
+      }
+  
+      if (!user.verified) {
+        return res.status(403).json({ error: "Email not verified" });
+      }
+  
+      // Generate 6-digit OTP
+      const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+      user.resetPasswordToken = otp;
+      user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+      await user.save();
+  
+      // Send email
+      await sendMail(
+        user.email,
+        "Password Reset Code",
+        `Your password reset code is: ${otp}`,
+        `
+          <div style="font-family: Arial; max-width: 600px; margin: 0 auto;">
+            <h2>Password Reset Request</h2>
+            <p>Use the following code to reset your password:</p>
+            <div style="background:#f5f5f5;padding:15px;text-align:center;margin:20px 0;">
+              <span style="font-size:24px;font-weight:bold;">${otp}</span>
+            </div>
+            <p>This code will expire in 15 minutes.</p>
+          </div>
+        `
+      );
+  
+      res.status(200).json({ message: "Password reset code sent to your email." });
     } catch (error) {
-        console.error('Verification Error:', {
-            error: error.message,
-            stack: error.stack,
-            timestamp: new Date().toISOString()
-        });
-
-        res.status(500).json({
-            error: process.env.NODE_ENV === 'development'
-                ? `Verification failed: ${error.message}`
-                : 'Could not complete verification'
-        });
+      console.error("Password Reset Send Error:", error);
+      res.status(500).json({ error: "Failed to send reset code" });
     }
-};
-
-    const changePassword = async (req, res) => {
+  };
+  // verifyForgetPasswordCode.js
+const verifyResetPasswordCode = async (req, res) => {
     try {
-        // Debugging: Verify incoming user object
-        console.log('Request User:', req.user);
-        
-        const userId = req.user.userId;
-        console.log('User ID:', userId);
-
-        if (!userId) {
-            return res.status(401).json({ error: 'User not authenticated' });
-        }
-
-        const { oldPassword, newPassword } = req.body;
-        
-        // Validate input
-        if (!oldPassword || !newPassword) {
-            return res.status(400).json({ error: 'Both passwords are required' });
-        }
-
-        // Find user with password explicitly selected
-        const user = await User.findById(req.user.userId).select('+password');
-        console.log('Found User:', user); // Debug
-        
-        if (!user) {
-            return res.status(404).json({ error: 'User account not found' });
-        }
-
-        // Verify password exists
-        if (!user.password) {
-            return res.status(400).json({ 
-                error: 'This account has no password set' 
-            });
-        }
-
-        // Compare passwords
-        const isMatch = await hash.compareData(oldPassword, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ error: 'Current password is incorrect' });
-        }
-
-        // Update password
-        user.password = await hash.hashData(newPassword);
-        user.passwordChangedAt = Date.now();
-        await user.save();
-
-        // Optional: Invalidate old tokens
-        res.clearCookie('token');
-
-        return res.status(200).json({ 
-            message: 'Password updated successfully',
-            // Optionally return a new token
-            token: jwt.sign(
-                { userId: user._id },
-                process.env.JWT_SECRET,
-                { expiresIn: '1h' }
-            )
+      const { email, otp, newPassword } = req.body;
+  
+      if (!email || !otp || !newPassword) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+  
+      const user = await User.findOne({ email }).select(
+        "+resetPasswordToken +resetPasswordExpires +password"
+      );
+  
+      if (!user) {
+        return res.status(404).json({ error: "Invalid request" });
+      }
+  
+      // Check OTP validity
+      if (
+        user.resetPasswordToken !== otp ||
+        new Date() > user.resetPasswordExpires
+      ) {
+        return res.status(400).json({ error: "Invalid or expired OTP" });
+      }
+  
+      // Check if new password is different
+      const isSamePassword = await hash.compareData(newPassword, user.password);
+      if (isSamePassword) {
+        return res.status(400).json({
+          error: "New password must be different from the old one",
         });
-
+      }
+  
+      // Update password
+      user.password = await hash.hashData(newPassword);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpires = undefined;
+      user.passwordChangedAt = Date.now();
+      await user.save();
+  
+      res.status(200).json({ message: "Password reset successful. Please log in." });
     } catch (error) {
-        console.error('Password Change Error:', error);
-        return res.status(500).json({ 
-            error: 'Password update failed',
-            ...(process.env.NODE_ENV === 'development' && { details: error.message })
-        });
+      console.error("Password Reset Verify Error:", error);
+      res.status(500).json({ error: "Failed to reset password" });
     }
-};
+  };
+  
 
-
-const sendForgetPasswordCode = async (req, res) => {
-    try {
-        // 1. Validate input
-        const { error } = forgetPasswordValidator.validate(req.body);
-        if (error) {
-            return res.status(400).json({ 
-                error: error.details[0].message 
-            });
-        }
-        const email = req.body.email.trim();
-
-        // 2. Find user
-        const user = await User.findOne({ email }).select('+verified');
-        if (!user) {
-            // Security: Generic response regardless of email existence
-            return res.status(200).json({
-                message: 'If this email exists, a password reset code has been sent'
-            });
-        }
-
-        // 3. Generate secure 6-digit code
-        const forgetPasswordCode = Math.floor(100000 + Math.random() * 900000).toString();
-        const hmacSignature = await hash.generateHMAC(
-            forgetPasswordCode, 
-            process.env.HMAC_SECRET
-        );
-
-        // 4. Save with expiration (15 minutes)
-        user.forgetPasswordCode = forgetPasswordCode;
-        user.forgetPasswordCodeValidation = new Date(Date.now() + 15 * 60 * 1000);
-        await user.save();
-
-        // 5. Send password reset email
-        const emailResult = await sendMail(
-            user.email,
-            'Your Password Reset Code',
-            `Your password reset code is: ${forgetPasswordCode}\nCode expires in 15 minutes.`,
-            `
-                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                    <h2 style="color: #333;">Password Reset Request</h2>
-                    <p>We received a request to reset your password. Here's your verification code:</p>
-                    <div style="background: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-                        <p style="font-size: 24px; font-weight: bold; letter-spacing: 2px;">
-                            ${forgetPasswordCode}
-                        </p>
-                    </div>
-                    <p>This code will expire in 15 minutes.</p>
-                    <p>If you didn't request this, please ignore this email or contact support.</p>
-                    <p style="margin-top: 30px; font-size: 12px; color: #777;">
-                        For security reasons, please don't share this code with anyone.
-                    </p>
-                </div>
-            `
-        );
-
-        if (!emailResult?.success) {
-            throw new Error('Failed to send password reset email');
-        }
-
-        // 6. Respond successfully
-        res.status(200).json({
-            success: true,
-            message: 'Password reset code sent',
-            expiresIn: '15 minutes',
-            // Don't send the code in response for security
-        });
-
-    } catch (error) {
-        console.error('Password Reset Error:', {
-            error: error.message,
-            endpoint: 'sendForgetPasswordCode',
-            timestamp: new Date().toISOString(),
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
-
-        res.status(500).json({
-            success: false,
-            error: process.env.NODE_ENV === 'development'
-                ? `Password reset failed: ${error.message}`
-                : 'Could not process password reset request'
-        });
-    }
-};
-
-
-const verifyForgetPasswordCode = async (req, res) => {
-    console.log(req.body);
-    const { email, forgetPasswordCode, newPassword } = req.body;
-    
-    try {
-       
-        const { error } = acceptFPCodeSchema.validate(req.body         
-       );
-        
-        if (error) {
-            return res.status(400).json({ 
-                success: false,
-                error: error.details[0].message,
-                ...(process.env.NODE_ENV === 'development' && { details: error.details })
-            });
-        }
-
-        // 2. Find user with password reset data
-        const user = await User.findOne({ email: email })
-            .select('+forgetPasswordCode +forgetPasswordCodeValidation +password');
-        
-        if (!user) {
-            return res.status(404).json({ 
-                success: false,
-                error: 'Account not found' 
-            });
-        }
-
-        // 3. Verify code exists
-        if (!user.forgetPasswordCode) {
-            return res.status(400).json({ 
-                success: false,
-                error: 'No password reset request found for this email' 
-            });
-        }
-
-        // 4. Verify code matches
-        if (user.forgetPasswordCode !== forgetPasswordCode) {
-            return res.status(401).json({ 
-                success: false,
-                error: 'Invalid password reset code' 
-            });
-        }
-
-        // 5. Check code expiration
-        const currentTime = new Date();
-        if (currentTime > user.forgetPasswordCodeValidation) {
-            // Clean up expired code
-            user.forgetPasswordCode = undefined;
-            user.forgetPasswordCodeValidation = undefined;
-            await user.save();
-
-            return res.status(410).json({ 
-                success: false,
-                error: 'Password reset code has expired' 
-            });
-        }
-
-        // 6. Verify new password is different from old
-        const isSamePassword = await hash.compareData(newPassword, user.password);
-        if (isSamePassword) {
-            return res.status(400).json({
-                success: false,
-                error: 'New password must be different from current password'
-            });
-        }
-
-        // 7. Update password and clear reset fields
-        user.password = await hash.hashData(newPassword);
-        user.passwordChangedAt = currentTime;
-        user.forgetPasswordCode = undefined;
-        user.forgetPasswordCodeValidation = undefined;
-        await user.save();
-
-        // 8. Invalidate existing sessions (optional)
-        // user.sessionVersion = (user.sessionVersion || 0) + 1;
-        // await user.save();
-
-        // 9. Generate new auth token
-        const authToken = jwt.sign(
-            { userId: user._id },
-            process.env.JWT_SECRET,
-            { expiresIn: '7d' }
-        );
-
-        // 10. Clear any existing token cookies
-        res.clearCookie('token');
-
-        // 11. Success response
-        res.status(200).json({
-            success: true,
-            message: 'Password reset successfully',
-            authToken,
-            user: {
-                _id: user._id,
-                name: user.name,
-                email: user.email
-            }
-        });
-
-    } catch (error) {
-        console.error('Password Reset Error:', {
-            error: error.message,
-            endpoint: 'verifyForgetPasswordCode',
-            timestamp: new Date().toISOString(),
-            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
-        });
-
-        res.status(500).json({
-            success: false,
-            error: process.env.NODE_ENV === 'development'
-                ? `Password reset failed: ${error.message}`
-                : 'Could not complete password reset'
-        });
-    }
-};
-
-export { signUp, logIn,logOut, verifyVerificationCode, changePassword,sendForgetPasswordCode,verifyForgetPasswordCode,resendVerificationCode};
+export { signUp, verifyEmail, logIn, logOut, sendResetPasswordCode ,verifyResetPasswordCode};

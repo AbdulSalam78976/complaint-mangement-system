@@ -1,22 +1,21 @@
-import {Router}  from 'express';
+import { Router } from 'express';
 import * as authController from '../controllers/authController.js';
 import { auth } from '../middleware/auth.js';
 import resendOtpLimiter from '../middleware/otpLimiter.js';
 
-
 const router = Router();
+
+// Registration & Email Verification
 router.post('/register', authController.signUp);
-router.patch('/register/verify-verification-code', authController.verifyVerificationCode);
-router.post('/register/resend-verification-code', resendOtpLimiter,authController.resendVerificationCode);
+router.get('/register/verify-email', authController.verifyEmail);
 
+
+// Auth
 router.post('/login', authController.logIn);
-router.post('/logout', auth,authController.logOut);
+router.post('/logout', auth, authController.logOut);
 
-
-router.patch('/change-password', auth, authController.changePassword);
-router.patch('/reset-password/send-forgetPassword-code',resendOtpLimiter, authController.sendForgetPasswordCode);
-router.patch('/reset-password/verify-forgetPassword-code', authController.verifyForgetPasswordCode);
-
-
+// Password Management
+router.post('/password/reset/send-code', resendOtpLimiter, authController.sendResetPasswordCode);
+router.post('/password/reset/verify-code', authController.verifyResetPasswordCode);
 
 export default router;
