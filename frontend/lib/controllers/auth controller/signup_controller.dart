@@ -9,7 +9,6 @@ class SignupController extends GetxController {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
-  final confirmPasswordController = TextEditingController();
   //
   RxBool obscureText = true.obs;
   // Reactive loading state
@@ -77,7 +76,6 @@ class SignupController extends GetxController {
     nameController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    confirmPasswordController.dispose();
     super.onClose();
   }
 }

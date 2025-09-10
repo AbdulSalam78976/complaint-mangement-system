@@ -163,6 +163,7 @@ class AddNewComplaintController extends GetxController {
 
         if (result.isSuccess) {
           Get.back();
+          Get.delete<AddNewComplaintController>();
 
           isSubmitting.value = false;
           Utils.snackBar(
@@ -171,8 +172,6 @@ class AddNewComplaintController extends GetxController {
                 "Complaint submitted successfully. We'll get back to you soon",
           );
         } else {
-          Get.back();
-
           isSubmitting.value = false;
           Utils.snackBar(
             title: 'Error',

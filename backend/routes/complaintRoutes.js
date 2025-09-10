@@ -4,7 +4,7 @@ import *  as Complaint from '../controllers/complaintController.js';
 import upload from '../middleware/multer.js';
 const router = Router();
 
-router.post('/create', auth,permit('user'),upload.array('attachments',5), Complaint.createComplaint);
+router.post('/create', auth,upload.array('attachments',5), Complaint.createComplaint);
 router.get('/', auth, Complaint.listComplaints);
 router.get('/stats/summary', auth, Complaint.statsSummary); // staff/admin
 router.get('/:id', auth,Complaint.getComplaint);

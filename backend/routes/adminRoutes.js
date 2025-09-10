@@ -5,6 +5,6 @@ import getAllUsers from '../controllers/adminControllers.js';
 const router = Router();
 
 // Only admins can fetch all users
-router.get('/users', auth, permit('admin'), getAllUsers);
+router.get('/users', auth, getAllUsers);
 
 export default router;

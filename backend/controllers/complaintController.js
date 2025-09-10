@@ -46,35 +46,22 @@ const createComplaint = async (req, res) => {
 // ---------------- List Complaints ----------------
 const listComplaints = async (req, res) => {
   try {
-    const { status, category, priority, q, page = 1, limit = 10 } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
-    const filter = {};
+    let filter = {};
 
-    if (status) filter.status = status;
-    if (category) filter.category = category;
-    if (priority) filter.priority = priority;
+    if (req.user.role === 'user') {
+      filter = { createdBy: req.user._id };
+    } else if (req.user.role === 'staff') {
+      filter = { $or: [{ assignedTo: req.user.sub }, { assignedTo: null }] };
+    } else if (req.user.role === 'admin') {
+      filter = {}; // no restrictions
+    }
 
-    if (req.user.role === 'user') filter.createdBy = req.user.sub;
-    else if (req.user.role === 'staff') filter.$or = [{ assignedTo: req.user.sub }, { assignedTo: null }];
+    const items = await Complaint.find(filter)
+      .sort({ createdAt: -1 })
+      .populate('createdBy', 'name email role');
+      
 
-    if (q) filter.$or = [
-      { title: { $regex: q, $options: 'i' } },
-      { description: { $regex: q, $options: 'i' } },
-      { phone: { $regex: q, $options: 'i' } },
-      { email: { $regex: q, $options: 'i' } }
-    ];
-
-    const [items, total] = await Promise.all([
-      Complaint.find(filter)
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(Number(limit))
-        .populate('createdBy', 'name email role')
-        .populate('assignedTo', 'name email role'),
-      Complaint.countDocuments(filter),
-    ]);
-
-    res.json({ items, total, page: Number(page), pages: Math.ceil(total / Number(limit)) });
+    res.json({ items });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: 'Failed to list complaints' });

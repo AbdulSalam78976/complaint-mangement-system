@@ -45,7 +45,6 @@ const ComplaintSchema = new Schema({
   comments: [CommentSchema],
 
   attachments: [{ type: String }], // store file URLs/paths
-  tags: [{ type: String, trim: true }], // optional tags for searching/filtering
 
 }, { timestamps: true });
 

@@ -43,6 +43,7 @@ dependencies:
   google_fonts: 
   jwt_decoder: ^2.0.1
   file_picker: 
+  timeago: ^3.3.0
 
 
 
