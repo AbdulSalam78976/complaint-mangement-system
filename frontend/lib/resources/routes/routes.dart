@@ -59,7 +59,7 @@ class AppRoutes {
 
     GetPage(
       name: RouteName.complaintDetailsScreen,
-      page: () => ComplaintDetailsScreen(),
+      page: () => ComplaintDetailsScreen(complaint: Get.arguments),
       transitionDuration: Duration(milliseconds: 250),
       transition: Transition.rightToLeftWithFade,
     ),

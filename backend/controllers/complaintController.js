@@ -148,11 +148,11 @@ const updateComplaint = async (req, res) => {
   }
 };
 
-// ---------------- Add Comment ----------------
+// ---------------- Add Comment --------------
 const addComment = async (req, res) => {
   try {
     const { id } = req.params;
-    const { body, visibility = 'public' } = req.body;
+    const { body, visibility = 'public',isAdmin } = req.body;
     if (!body) return res.status(400).json({ error: 'body required' });
 
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid ID' });
@@ -160,13 +160,13 @@ const addComment = async (req, res) => {
     const doc = await Complaint.findById(id);
     if (!doc) return res.status(404).json({ error: 'Not found' });
 
-    const isOwner = String(doc.createdBy) === req.user.sub;
+    const isOwner = String(doc.createdBy) === req.user._id;
     const isStaffOrAdmin = ['staff', 'admin'].includes(req.user.role);
     if (!isOwner && !isStaffOrAdmin) return res.status(403).json({ error: 'Forbidden' });
 
     const finalVisibility = isStaffOrAdmin ? visibility : 'public';
 
-    doc.comments.push({ author: req.user.sub, body, visibility: finalVisibility });
+    doc.comments.push({ author: req.user._id, body, visibility: finalVisibility });
     await doc.save();
 
     const populated = await Complaint.findById(doc._id).populate('comments.author', 'name email role');

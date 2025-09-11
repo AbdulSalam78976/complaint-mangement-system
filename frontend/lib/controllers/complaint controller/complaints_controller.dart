@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:frontend/data/api_service.dart';
 import 'package:frontend/models/complaint_model.dart';
+import 'package:frontend/models/comment_model.dart';
 
 class ComplaintController extends GetxController {
   final api = ApiService();
@@ -8,15 +10,16 @@ class ComplaintController extends GetxController {
   // All complaints
   final complaints = <Complaint>[].obs;
 
-  // Selected complaint for details
-  final selectedComplaint = Rxn<Complaint>();
-
   // Loading states
   final isLoading = false.obs;
 
   // Filters (use backend values)
   final filters = ['All', 'open', 'in progress', 'resolved'].obs;
   final selectedFilter = "All".obs;
+
+  // Complaint details reactive states
+  final comments = <Comment>[].obs; // Stores current complaint comments
+  final selectedStatus = "".obs; // Tracks currently selected status
 
   @override
   void onInit() {
@@ -39,11 +42,6 @@ class ComplaintController extends GetxController {
     }
   }
 
-  // Select complaint for details screen
-  void selectComplaint(Complaint complaint) {
-    selectedComplaint.value = complaint;
-  }
-
   // Filter complaints
   List<Complaint> get filteredComplaints {
     if (selectedFilter.value == 'All') {
@@ -60,23 +58,65 @@ class ComplaintController extends GetxController {
     selectedFilter.value = filter;
   }
 
-  // Add comment (local update for now)
-  void addComment(String text, {bool isAdmin = false}) {
-    if (selectedComplaint.value != null) {
-      selectedComplaint.update((c) {
-        c?.comments.insert(0, {
-          'text': text,
-          'author': isAdmin ? 'Admin' : 'You',
-          'time': 'Just now',
-          'avatar': isAdmin
-              ? 'https://via.placeholder.com/150/0000FF/FFFFFF?text=Admin'
-              : 'https://via.placeholder.com/150/FF0000/FFFFFF?text=User',
-        });
-      });
+  // Refresh complaints
+  Future<void> refreshComplaints() async {
+    await fetchComplaints();
+  }
+
+  // Load comments for a specific complaint
+  void loadComments(Complaint complaint) {
+    comments
+      ..clear()
+      ..addAll(complaint.comments);
+    selectedStatus.value = complaint.status;
+  }
+
+  // Add comment
+  Future<void> addComment(
+    String text,
+    Complaint selectedComplaint, {
+    bool isAdmin = false,
+  }) async {
+    try {
+      isLoading.value = true;
+      final response = await api.post(
+        '/complaints/${selectedComplaint.id}/comments',
+        {'body': text, 'admin': isAdmin, 'visibility': 'public'},
+      );
+      if (response.isSuccess) {
+        // Fetch updated complaint
+        final refreshed = await api.get('/complaints/${selectedComplaint.id}');
+        if (refreshed.isSuccess) {
+          final updatedComplaint = Complaint.fromJson(refreshed.data);
+          loadComments(updatedComplaint);
+        }
+      } else {
+        debugPrint(response.errorMessage);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      isLoading.value = false;
     }
   }
 
-  void addComplaint(Complaint newComplaint) {
-    complaints.insert(0, newComplaint);
+  // Update complaint status
+  Future<void> updateStatus(String complaintId, String newStatus) async {
+    try {
+      isLoading.value = true;
+      final response = await api.put('/complaints/$complaintId/status', {
+        'status': newStatus,
+      });
+      if (response.isSuccess) {
+        selectedStatus.value = newStatus;
+        await refreshComplaints();
+      } else {
+        debugPrint(response.errorMessage);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
   }
 }

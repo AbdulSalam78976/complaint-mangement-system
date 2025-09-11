@@ -1,4 +1,5 @@
 import 'package:frontend/models/user_model.dart';
+import 'package:frontend/models/comment_model.dart';
 
 class Complaint {
   final String id;
@@ -9,11 +10,11 @@ class Complaint {
   final String status;
   final String phone;
   final String email;
-  final UserModel createdBy; // replaced CreatedBy with User model
+  final UserModel createdBy; // replaced CreatedBy with UserModel
   final String? resolvedBy;
   final String? lastUpdatedBy;
   final List<String> attachments;
-  final List<dynamic> comments; // can later convert to Comment model
+  final List<Comment> comments; // now strongly typed
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -37,21 +38,23 @@ class Complaint {
 
   factory Complaint.fromJson(Map<String, dynamic> json) {
     return Complaint(
-      id: json['_id'],
-      title: json['title'],
-      description: json['description'],
-      category: json['category'],
-      priority: json['priority'],
-      status: json['status'],
-      phone: json['phone'],
-      email: json['email'],
-      createdBy: UserModel.fromJson(json['createdBy']), // use User model
+      id: json['_id'] ?? '',
+      title: json['title'] ?? '',
+      description: json['description'] ?? '',
+      category: json['category'] ?? '',
+      priority: json['priority'] ?? '',
+      status: json['status'] ?? '',
+      phone: json['phone'] ?? '',
+      email: json['email'] ?? '',
+      createdBy: UserModel.fromJson(json['createdBy'] ?? {}),
       resolvedBy: json['resolvedBy'],
       lastUpdatedBy: json['lastUpdatedBy'],
       attachments: List<String>.from(json['attachments'] ?? []),
-      comments: List<dynamic>.from(json['comments'] ?? []),
-      createdAt: DateTime.parse(json['createdAt']),
-      updatedAt: DateTime.parse(json['updatedAt']),
+      comments: (json['comments'] as List<dynamic>? ?? [])
+          .map((c) => Comment.fromJson(c))
+          .toList(),
+      createdAt: DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      updatedAt: DateTime.tryParse(json['updatedAt'] ?? '') ?? DateTime.now(),
     );
   }
 
@@ -65,11 +68,11 @@ class Complaint {
       'status': status,
       'phone': phone,
       'email': email,
-      'createdBy': createdBy.toJson(), // use User model
+      'createdBy': createdBy.toJson(),
       'resolvedBy': resolvedBy,
       'lastUpdatedBy': lastUpdatedBy,
       'attachments': attachments,
-      'comments': comments,
+      'comments': comments.map((c) => c.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
     };
