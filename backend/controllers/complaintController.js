@@ -44,22 +44,25 @@ const createComplaint = async (req, res) => {
 
 
 // ---------------- List Complaints ----------------
+// ---------------- List Complaints ----------------
 const listComplaints = async (req, res) => {
   try {
     let filter = {};
 
     if (req.user.role === 'user') {
       filter = { createdBy: req.user._id };
-    } else if (req.user.role === 'staff') {
-      filter = { $or: [{ assignedTo: req.user.sub }, { assignedTo: null }] };
-    } else if (req.user.role === 'admin') {
+    }
+    // Remove the staff filter that uses assignedTo
+    // else if (req.user.role === 'staff') {
+    //   filter = { $or: [{ assignedTo: req.user.sub }, { assignedTo: null }] };
+    // }
+    else if (req.user.role === 'admin') {
       filter = {}; // no restrictions
     }
 
     const items = await Complaint.find(filter)
       .sort({ createdAt: -1 })
       .populate('createdBy', 'name email role');
-      
 
     res.json({ items });
   } catch (e) {
@@ -68,7 +71,7 @@ const listComplaints = async (req, res) => {
   }
 };
 
-// ---------------- Get Single Complaint ----------------
+// ---------------- Get Single Complaint ----------------// ---------------- Get Single Complaint ----------------
 const getComplaint = async (req, res) => {
   try {
     const { id } = req.params;
@@ -76,8 +79,7 @@ const getComplaint = async (req, res) => {
 
     const doc = await Complaint.findById(id)
       .populate('createdBy', 'name email role')
-      .populate('assignedTo', 'name email role')
-      .populate('comments.author', 'name email role');
+      .populate('comments.author', 'name email role'); // Removed .populate('assignedTo')
 
     if (!doc) return res.status(404).json({ error: 'Not found' });
     if (req.user.role === 'user' && String(doc.createdBy._id) !== req.user.sub)
@@ -91,6 +93,7 @@ const getComplaint = async (req, res) => {
 };
 
 // ---------------- Update Complaint ----------------
+// ---------------- Update Complaint ----------------
 const updateComplaint = async (req, res) => {
   try {
     const { id } = req.params;
@@ -102,7 +105,7 @@ const updateComplaint = async (req, res) => {
     const isOwner = String(doc.createdBy) === req.user.sub;
     const isStaffOrAdmin = ['staff', 'admin'].includes(req.user.role);
 
-    const { title, description, status, assignedTo, priority, category, phone, email, attachments } = req.body;
+    const { title, description, status, priority, category, phone, email, attachments } = req.body;
 
     // Owner/staff can update basic fields
     if (title !== undefined || description !== undefined || category !== undefined || priority !== undefined || phone !== undefined || email !== undefined || attachments !== undefined) {
@@ -123,23 +126,10 @@ const updateComplaint = async (req, res) => {
       doc.status = status;
     }
 
-    // Only staff/admin can assign
-    if (assignedTo !== undefined) {
-      if (!isStaffOrAdmin) return res.status(403).json({ error: 'Only staff/admin can reassign' });
-      if (assignedTo === null) doc.assignedTo = null;
-      else if (mongoose.Types.ObjectId.isValid(assignedTo)) {
-        const assignee = await User.findById(assignedTo);
-        if (!assignee || !['staff', 'admin'].includes(assignee.role))
-          return res.status(400).json({ error: 'Assigned user must be staff/admin' });
-        doc.assignedTo = assignee._id;
-      } else return res.status(400).json({ error: 'Invalid assignedTo value' });
-    }
-
     await doc.save();
 
     const populated = await Complaint.findById(doc._id)
-      .populate('createdBy', 'name email role')
-      .populate('assignedTo', 'name email role');
+      .populate('createdBy', 'name email role');
 
     res.json({ complaint: populated });
   } catch (e) {
@@ -151,32 +141,53 @@ const updateComplaint = async (req, res) => {
 // ---------------- Add Comment --------------
 const addComment = async (req, res) => {
   try {
+    console.log(req.user);
     const { id } = req.params;
-    const { body, visibility = 'public',isAdmin } = req.body;
-    if (!body) return res.status(400).json({ error: 'body required' });
+    const { body, visibility = 'public', isAdmin } = req.body;
+    
+    if (!body) return res.status(400).json({ error: 'Comment body required' });
 
-    if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid ID' });
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid complaint ID' });
+    }
 
-    const doc = await Complaint.findById(id);
-    if (!doc) return res.status(404).json({ error: 'Not found' });
+    const complaint = await Complaint.findById(id);
+    if (!complaint) return res.status(404).json({ error: 'Complaint not found' });
 
-    const isOwner = String(doc.createdBy) === req.user._id;
+    const isOwner = String(complaint.createdBy) === String(req.user._id); // Added String() conversion
     const isStaffOrAdmin = ['staff', 'admin'].includes(req.user.role);
-    if (!isOwner && !isStaffOrAdmin) return res.status(403).json({ error: 'Forbidden' });
+    
+    console.log('User ID:', req.user._id);
+    console.log('Complaint owner ID:', complaint.createdBy);
+    console.log('Is owner:', isOwner);
+    console.log('Is staff/admin:', isStaffOrAdmin);
+    
+    // Allow comment if user is owner OR staff/admin
+    if (!isOwner && !isStaffOrAdmin) {
+      console.log('Permission denied - neither owner nor staff/admin');
+      return res.status(403).json({ error: 'You do not have permission to comment on this complaint' });
+    }
 
     const finalVisibility = isStaffOrAdmin ? visibility : 'public';
 
-    doc.comments.push({ author: req.user._id, body, visibility: finalVisibility });
-    await doc.save();
+    complaint.comments.push({ 
+      author: req.user._id, 
+      body, 
+      visibility: finalVisibility,
+      admin: isStaffOrAdmin // Store if comment is from admin/staff
+    });
+    
+    await complaint.save();
 
-    const populated = await Complaint.findById(doc._id).populate('comments.author', 'name email role');
-    res.status(201).json({ comments: populated.comments });
+    const populatedComplaint = await Complaint.findById(complaint._id)
+      .populate('comments.author', 'name email role ');
+    
+    res.status(201).json({ comments: populatedComplaint.comments });
   } catch (e) {
-    console.error(e);
+    console.error('Add comment error:', e);
     res.status(500).json({ error: 'Could not add comment' });
   }
 };
-
 // ---------------- Stats Summary ----------------
 const statsSummary = async (req, res) => {
   try {

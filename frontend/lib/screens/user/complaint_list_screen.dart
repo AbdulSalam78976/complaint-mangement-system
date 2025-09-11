@@ -64,7 +64,6 @@ class ComplaintListScreen extends StatelessWidget {
                               arguments: {
                                 'complaint': complaint,
                                 'isAdminView': false,
-                                'status': complaint.status,
                               },
                             ),
                           );
