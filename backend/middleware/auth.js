@@ -10,7 +10,7 @@ const auth = async (req, res, next) => {
     // 2. Split header into type and token (e.g., "Bearer eyJhbGciOi...")
     const [type, token] = authHeader.split(' ');
     if (type !== 'Bearer' || !token) throw createError(401, 'Unauthorized');
-
+    console.log('verifing token', token);
     // 3. Verify the JWT token using the secret key
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 

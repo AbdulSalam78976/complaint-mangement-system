@@ -68,7 +68,7 @@ class LoginController extends GetxController {
         );
 
         Future.delayed(const Duration(seconds: 1), () {
-          Get.offAllNamed(RouteName.userDashboard);
+          SessionManager.navigateBasedOnRole();
         });
       } else {
         if (result.statusCode == 403) {

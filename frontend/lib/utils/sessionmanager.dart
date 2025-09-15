@@ -97,7 +97,7 @@ class SessionManager {
   static Future<void> navigateBasedOnRole() async {
     final decoded = await decodeToken();
     final role = decoded?['role'];
-
+    debugPrint(role);
     if (role == 'user') {
       Get.offNamed(RouteName.userDashboard);
     } else if (role == 'admin') {
