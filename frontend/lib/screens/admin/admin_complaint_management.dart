@@ -1,27 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:frontend/controllers/complaint%20controller/complaints_controller.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/complaint_card.dart';
 import 'package:get/get.dart';
+import 'package:timeago/timeago.dart' as timeago;
 
-class AdminComplaintManagement extends StatefulWidget {
-  const AdminComplaintManagement({super.key});
+class AdminComplaintManagement extends StatelessWidget {
+  AdminComplaintManagement({super.key});
 
-  @override
-  State<AdminComplaintManagement> createState() =>
-      _AdminComplaintManagementState();
-}
-
-class _AdminComplaintManagementState extends State<AdminComplaintManagement> {
-  String _selectedFilter = 'All';
-  final List<String> _filters = [
-    'All',
-    'Pending',
-    'In Progress',
-    'Resolved',
-    'Rejected',
-  ];
+  final ComplaintController controller = Get.put(ComplaintController());
 
   @override
   Widget build(BuildContext context) {
@@ -42,7 +31,7 @@ class _AdminComplaintManagementState extends State<AdminComplaintManagement> {
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppPalette.primaryColor,
         onPressed: () {
-          _showExportDialog();
+          _showExportDialog(context);
         },
         child: const Icon(Icons.download),
       ),
@@ -80,41 +69,41 @@ class _AdminComplaintManagementState extends State<AdminComplaintManagement> {
               IconButton(
                 icon: const Icon(Icons.search),
                 onPressed: () {
-                  // Show search dialog
+                  // TODO: Show search dialog
                 },
               ),
             ],
           ),
           const SizedBox(height: 16),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _filters.map((filter) {
-                final isSelected = _selectedFilter == filter;
-                return Padding(
-                  padding: const EdgeInsets.only(right: 8),
-                  child: FilterChip(
-                    selected: isSelected,
-                    label: Text(filter),
-                    onSelected: (selected) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
-                    },
-                    backgroundColor: Colors.grey[200],
-                    selectedColor: AppPalette.primaryColor.withOpacity(0.2),
-                    checkmarkColor: AppPalette.primaryColor,
-                    labelStyle: TextStyle(
-                      color: isSelected
-                          ? AppPalette.primaryColor
-                          : Colors.black87,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+          Obx(
+            () => SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: controller.filters.map((filter) {
+                  final isSelected = controller.selectedFilter.value == filter;
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: FilterChip(
+                      selected: isSelected,
+                      label: Text(filter),
+                      onSelected: (selected) {
+                        controller.changeFilter(filter);
+                      },
+                      backgroundColor: Colors.grey[200],
+                      selectedColor: AppPalette.primaryColor.withOpacity(0.2),
+                      checkmarkColor: AppPalette.primaryColor,
+                      labelStyle: TextStyle(
+                        color: isSelected
+                            ? AppPalette.primaryColor
+                            : Colors.black87,
+                        fontWeight: isSelected
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                      ),
                     ),
-                  ),
-                );
-              }).toList(),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
@@ -123,151 +112,57 @@ class _AdminComplaintManagementState extends State<AdminComplaintManagement> {
   }
 
   Widget _buildComplaintList() {
-    // Sample complaint data
-    final complaints = [
-      {
-        'id': 'CMP-1001',
-        'title': 'Network connectivity issue',
-        'description': 'Unable to connect to the internet in the office',
-        'status': 'Pending',
-        'date': '2023-06-15',
-        'priority': 'High',
-        'user': 'John Doe',
-        'department': 'IT Department',
-        'time': '2 hours ago',
-      },
-      {
-        'id': 'CMP-1002',
-        'title': 'Software license expired',
-        'description': 'Adobe Creative Cloud license has expired',
-        'status': 'In Progress',
-        'date': '2023-06-14',
-        'priority': 'Medium',
-        'user': 'Jane Smith',
-        'department': 'IT Department',
-        'time': '1 day ago',
-      },
-      {
-        'id': 'CMP-1003',
-        'title': 'Hardware malfunction',
-        'description':
-            'Printer not working properly in the marketing department',
-        'status': 'Resolved',
-        'date': '2023-06-10',
-        'priority': 'Low',
-        'user': 'Robert Johnson',
-        'department': 'Maintenance',
-        'time': '5 days ago',
-      },
-      {
-        'id': 'CMP-1004',
-        'title': 'Email delivery failure',
-        'description': 'Emails not being delivered to external domains',
-        'status': 'Rejected',
-        'date': '2023-06-08',
-        'priority': 'High',
-        'user': 'Emily Davis',
-        'department': 'IT Department',
-        'time': '1 week ago',
-      },
-      {
-        'id': 'CMP-1005',
-        'title': 'Access control issue',
-        'description': 'Unable to access shared drive for project files',
-        'status': 'Pending',
-        'date': '2023-06-07',
-        'priority': 'Medium',
-        'user': 'Michael Wilson',
-        'department': 'IT Department',
-        'time': '1 week ago',
-      },
-    ];
+    return Obx(() {
+      if (controller.isLoading.value) {
+        return const Center(child: CircularProgressIndicator());
+      }
 
-    // Filter complaints based on selected filter
-    final filteredComplaints = _selectedFilter == 'All'
-        ? complaints
-        : complaints.where((c) => c['status'] == _selectedFilter).toList();
+      final complaints = controller.filteredComplaints;
 
-    return filteredComplaints.isEmpty
-        ? Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inbox, size: 80, color: Colors.grey[400]),
-                const SizedBox(height: 16),
-                Text(
-                  'No complaints found',
-                  style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-                ),
-              ],
-            ),
-          )
-        : ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: filteredComplaints.length,
-            itemBuilder: (context, index) {
-              final complaint = filteredComplaints[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
-                child: EnhancedComplaintCard(
-                  title: complaint['title']!,
-                  department: complaint['department']!,
-                  priority: complaint['priority']!,
-                  status: complaint['status']!,
-                  time: complaint['time']!,
-                  description: complaint['description']!,
-                  onTap: () {
-                    // Handle card tap
-                    Get.toNamed(
-                      RouteName.complaintDetailsScreen,
-                      arguments: {'complaint': complaint, 'isAdminView': true},
-                    );
-                  },
-                ),
-              );
-            },
-          );
-  }
-
-  Widget _buildDetailItem(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(label, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 16)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusButton(String status, Color color) {
-    return InkWell(
-      onTap: () {
-        // Update status logic
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: color, width: 1),
-        ),
-        child: Text(
-          status,
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
+      if (complaints.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.inbox, size: 80, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(
+                'No complaints found',
+                style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+              ),
+            ],
           ),
-        ),
-      ),
-    );
+        );
+      }
+
+      return ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: complaints.length,
+        itemBuilder: (context, index) {
+          final complaint = complaints[index];
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: EnhancedComplaintCard(
+              title: complaint.title,
+              department: complaint.category,
+              priority: complaint.priority,
+              status: complaint.status,
+              time: timeago.format(complaint.createdAt),
+              description: complaint.description,
+              onTap: () {
+                Get.toNamed(
+                  RouteName.complaintDetailsScreen,
+                  arguments: {'complaint': complaint, 'isAdminView': true},
+                );
+              },
+            ),
+          );
+        },
+      );
+    });
   }
 
-  void _showExportDialog() {
+  void _showExportDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -281,18 +176,31 @@ class _AdminComplaintManagementState extends State<AdminComplaintManagement> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildExportOption('PDF', Icons.picture_as_pdf, Colors.red),
-                _buildExportOption('Excel', Icons.table_chart, Colors.green),
-                _buildExportOption('CSV', Icons.insert_drive_file, Colors.blue),
+                _buildExportOption(
+                  context,
+                  'PDF',
+                  Icons.picture_as_pdf,
+                  Colors.red,
+                ),
+                _buildExportOption(
+                  context,
+                  'Excel',
+                  Icons.table_chart,
+                  Colors.green,
+                ),
+                _buildExportOption(
+                  context,
+                  'CSV',
+                  Icons.insert_drive_file,
+                  Colors.blue,
+                ),
               ],
             ),
           ],
         ),
         actions: [
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
+            onPressed: () => Navigator.of(context).pop(),
             child: const Text('Cancel'),
           ),
         ],
@@ -300,7 +208,12 @@ class _AdminComplaintManagementState extends State<AdminComplaintManagement> {
     );
   }
 
-  Widget _buildExportOption(String format, IconData icon, Color color) {
+  Widget _buildExportOption(
+    BuildContext context,
+    String format,
+    IconData icon,
+    Color color,
+  ) {
     return InkWell(
       onTap: () {
         Navigator.of(context).pop();

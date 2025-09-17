@@ -35,41 +35,65 @@ class ComplaintListScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Expanded(
-              child: Obx(
-                () => controller.filteredComplaints.isEmpty
-                    ? const Center(
-                        child: Text(
-                          'No complaints found',
-                          style: TextStyle(
-                            color: AppPalette.greyColor,
-                            fontSize: 16,
-                          ),
-                        ),
-                      )
-                    : ListView.separated(
-                        itemCount: controller.filteredComplaints.length,
-                        separatorBuilder: (_, __) => const SizedBox(height: 16),
-                        itemBuilder: (context, index) {
-                          final complaint =
-                              controller.filteredComplaints[index];
-                          return EnhancedComplaintCard(
-                            title: complaint.title,
-                            department: complaint.category,
-                            priority: complaint.priority,
-                            status: complaint.status,
-                            time: timeago.format(complaint.createdAt),
-                            description: complaint.description,
-                            onTap: () => Get.toNamed(
-                              RouteName.complaintDetailsScreen,
-                              arguments: {
-                                'complaint': complaint,
-                                'isAdminView': false,
-                              },
-                            ),
-                          );
-                        },
+              child: Obx(() {
+                if (controller.isLoading.value) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+
+                if (controller.filteredComplaints.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No complaints found',
+                      style: TextStyle(
+                        color: AppPalette.greyColor,
+                        fontSize: 16,
                       ),
-              ),
+                    ),
+                  );
+                }
+
+                return RefreshIndicator(
+                  onRefresh: controller.fetchComplaints,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: controller.filteredComplaints.isEmpty
+                        ? const Center(
+                            child: Text(
+                              'No complaints found',
+                              style: TextStyle(
+                                color: AppPalette.greyColor,
+                                fontSize: 16,
+                              ),
+                            ),
+                          )
+                        : ListView.separated(
+                            key: ValueKey(controller.selectedFilter.value),
+                            itemCount: controller.filteredComplaints.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 16),
+                            itemBuilder: (context, index) {
+                              final complaint =
+                                  controller.filteredComplaints[index];
+                              return EnhancedComplaintCard(
+                                title: complaint.title,
+                                department: complaint.category,
+                                priority: complaint.priority,
+                                status: complaint.status,
+                                time: timeago.format(complaint.createdAt),
+                                description: complaint.description,
+                                onTap: () => Get.toNamed(
+                                  RouteName.complaintDetailsScreen,
+                                  arguments: {
+                                    'complaint': complaint,
+                                    'isAdminView': false,
+                                  },
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+                );
+              }),
             ),
           ],
         ),
@@ -142,7 +166,8 @@ class _Chip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
+      borderRadius: BorderRadius.circular(20),
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),

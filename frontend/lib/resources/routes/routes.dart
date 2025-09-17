@@ -96,7 +96,7 @@ class AppRoutes {
     ),
     GetPage(
       name: RouteName.adminComplaintManagement,
-      page: () => const AdminComplaintManagement(),
+      page: () => AdminComplaintManagement(),
       transitionDuration: Duration(milliseconds: 250),
       transition: Transition.rightToLeftWithFade,
     ),
