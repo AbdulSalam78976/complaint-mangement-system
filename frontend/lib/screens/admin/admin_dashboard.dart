@@ -3,6 +3,7 @@ import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/overview_card.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/quickaction_card.dart';
+import 'package:frontend/screens/resuable%20and%20common%20components/recent_activity_card.dart'; // Import the new component
 import 'package:get/get.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
 
@@ -312,7 +313,7 @@ class _AdminDashboardState extends State<AdminDashboard>
                   ),
                   const SizedBox(height: 32),
 
-                  // Recent Activity Section
+                  // Recent Activity Section - Updated to use the new component
                   Text(
                     'Recent Activity',
                     style: TextStyle(
@@ -364,43 +365,13 @@ class _AdminDashboardState extends State<AdminDashboard>
       },
     ];
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: activities.length,
-      itemBuilder: (context, index) {
-        final activity = activities[index];
-        return Card(
-          elevation: 2,
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: ListTile(
-            contentPadding: const EdgeInsets.all(16),
-            leading: CircleAvatar(
-              backgroundColor: activity['color'] as Color,
-              child: Icon(activity['icon'] as IconData, color: Colors.white),
-            ),
-            title: Text(
-              activity['title'] as String,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 4),
-                Text(activity['description'] as String),
-                const SizedBox(height: 4),
-                Text(
-                  activity['time'] as String,
-                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
+    return RecentActivityList(
+      activities: activities,
+      padding: const EdgeInsets.all(20),
+      borderRadius: BorderRadius.circular(16),
+      titleFontSize: 16,
+      descriptionFontSize: 14,
+      timeFontSize: 12,
     );
   }
 }

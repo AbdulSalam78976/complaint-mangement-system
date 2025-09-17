@@ -72,6 +72,7 @@ class ComplaintController extends GetxController {
   }
 
   // Add comment
+  // Add comment
   Future<void> addComment(
     String text,
     Complaint selectedComplaint, {
@@ -84,12 +85,32 @@ class ComplaintController extends GetxController {
         {'body': text, 'admin': isAdmin, 'visibility': 'public'},
       );
       if (response.isSuccess) {
-        // Fetch updated complaint
-        final refreshed = await api.get('/complaints/${selectedComplaint.id}');
-        if (refreshed.isSuccess) {
-          final updatedComplaint = Complaint.fromJson(refreshed.data);
-          loadComments(updatedComplaint);
-        }
+        debugPrint('Comment added successfully');
+
+        // Parse the new comment from API response and add to observable list
+        final newComment = Comment.fromJson(response.data['comment']);
+        comments.add(newComment); // 🚀 this will trigger Obx rebuild
+
+        // Optionally refresh complaints if you need updated counts
+        await refreshComplaints();
+      } else {
+        debugPrint(response.errorMessage);
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  Future<void> getComments(String complaintId) async {
+    try {
+      isLoading.value = true;
+      final response = await api.get('/complaints/$complaintId/comments');
+      if (response.isSuccess) {
+        comments.value = (response.data['comments'] as List)
+            .map((c) => Comment.fromJson(c))
+            .toList();
       } else {
         debugPrint(response.errorMessage);
       }

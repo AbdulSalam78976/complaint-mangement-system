@@ -10,5 +10,7 @@ router.get('/stats/summary', auth, Complaint.statsSummary); // staff/admin
 router.get('/:id', auth,Complaint.getComplaint);
 router.put('/:id', auth, Complaint.updateComplaint);
 router.post('/:id/comments', auth, Complaint.addComment);
+router.get('/:id/comments', auth, Complaint.getComments);
+
 
 export default router;

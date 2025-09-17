@@ -23,7 +23,7 @@ class EnhancedComplaintCard extends StatelessWidget {
   final double timeFontSize;
   final IconData? customIcon;
 
-  const EnhancedComplaintCard({
+  EnhancedComplaintCard({
     Key? key,
     required this.title,
     required this.department,
@@ -45,44 +45,50 @@ class EnhancedComplaintCard extends StatelessWidget {
     this.customIcon,
   }) : super(key: key);
 
-  IconData _getDepartmentIcon(String department) {
-    final dept = department.toLowerCase();
+  // Define categories with icons and colors
+  final List<Map<String, dynamic>> categories = [
+    {
+      'value': 'IT Department',
+      'icon': Icons.computer_outlined,
+      'color': Colors.blue,
+    },
+    {
+      'value': 'HR Department',
+      'icon': Icons.people_outline,
+      'color': Colors.purple,
+    },
+    {
+      'value': 'Finance',
+      'icon': Icons.account_balance_wallet_outlined,
+      'color': Colors.green,
+    },
+    {
+      'value': 'Facilities',
+      'icon': Icons.business_outlined,
+      'color': Colors.orange,
+    },
+    {'value': 'Security', 'icon': Icons.security_outlined, 'color': Colors.red},
+    {'value': 'Other', 'icon': Icons.help_outline, 'color': Colors.grey},
+  ];
 
-    if (dept.contains('it') ||
-        dept.contains('tech') ||
-        dept.contains('computer')) {
-      return Icons.computer;
-    } else if (dept.contains('hr') || dept.contains('human')) {
-      return Icons.people;
-    } else if (dept.contains('finance') || dept.contains('account')) {
-      return Icons.attach_money;
-    } else if (dept.contains('maintenance') || dept.contains('facility')) {
-      return Icons.build;
-    } else if (dept.contains('admin') || dept.contains('administration')) {
-      return Icons.business_center;
-    } else if (dept.contains('security')) {
-      return Icons.security;
-    } else if (dept.contains('clean') || dept.contains('housekeeping')) {
-      return Icons.cleaning_services;
-    } else if (dept.contains('electr') || dept.contains('power')) {
-      return Icons.electrical_services;
-    } else if (dept.contains('plumb') || dept.contains('water')) {
-      return Icons.plumbing;
-    } else if (dept.contains('network') ||
-        dept.contains('wifi') ||
-        dept.contains('internet')) {
-      return Icons.wifi;
-    } else if (dept.contains('medical') || dept.contains('health')) {
-      return Icons.local_hospital;
-    } else if (dept.contains('transport') || dept.contains('vehicle')) {
-      return Icons.directions_car;
-    } else if (dept.contains('garden') || dept.contains('landscape')) {
-      return Icons.nature;
-    } else if (dept.contains('cafeteria') || dept.contains('food')) {
-      return Icons.restaurant;
-    } else {
-      return Icons.business;
-    }
+  IconData _getDepartmentIcon(String department) {
+    // Find the category that matches the department
+    final category = categories.firstWhere(
+      (cat) => cat['value'] == department,
+      orElse: () => categories.last, // Default to 'Other' if not found
+    );
+
+    return category['icon'] as IconData;
+  }
+
+  Color _getDepartmentColor(String department) {
+    // Find the category that matches the department
+    final category = categories.firstWhere(
+      (cat) => cat['value'] == department,
+      orElse: () => categories.last, // Default to 'Other' if not found
+    );
+
+    return category['color'] as Color;
   }
 
   IconData _getPriorityIcon(String priority) {
@@ -156,6 +162,7 @@ class EnhancedComplaintCard extends StatelessWidget {
     final statusBgColor = getStatusBackgroundColor();
     final priorityColor = getPriorityColor();
     final priorityBgColor = getPriorityBackgroundColor();
+    final departmentColor = _getDepartmentColor(department);
 
     return Material(
       color: Colors.transparent,
@@ -190,13 +197,13 @@ class EnhancedComplaintCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: AppPalette.backgroundColor,
+                      color: departmentColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Icon(
                       customIcon ?? _getDepartmentIcon(department),
                       size: iconSize,
-                      color: AppPalette.greyColor,
+                      color: departmentColor,
                     ),
                   ),
                   const SizedBox(width: 16),

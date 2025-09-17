@@ -72,8 +72,10 @@ const listComplaints = async (req, res) => {
 };
 
 // ---------------- Get Single Complaint ----------------// ---------------- Get Single Complaint ----------------
+// ---------------- Get Single Complaint ----------------
 const getComplaint = async (req, res) => {
   try {
+    console.log(req.params);
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) return res.status(400).json({ error: 'Invalid ID' });
 
@@ -82,7 +84,9 @@ const getComplaint = async (req, res) => {
       .populate('comments.author', 'name email role'); // Removed .populate('assignedTo')
 
     if (!doc) return res.status(404).json({ error: 'Not found' });
-    if (req.user.role === 'user' && String(doc.createdBy._id) !== req.user.sub)
+    
+    // Fix: Use String() conversion for proper comparison
+    if (req.user.role === 'user' && String(doc.createdBy._id) !== String(req.user._id))
       return res.status(403).json({ error: 'Forbidden' });
 
     res.json({ complaint: doc });
@@ -141,51 +145,100 @@ const updateComplaint = async (req, res) => {
 // ---------------- Add Comment --------------
 const addComment = async (req, res) => {
   try {
-    console.log(req.user);
     const { id } = req.params;
-    const { body, visibility = 'public', isAdmin } = req.body;
+    const { body, visibility = 'public' } = req.body;
     
-    if (!body) return res.status(400).json({ error: 'Comment body required' });
+    // Validation
+    if (!body || body.trim().length === 0) {
+      return res.status(400).json({ error: 'Comment body is required' });
+    }
+
+    if (body.trim().length > 1000) {
+      return res.status(400).json({ error: 'Comment too long (max 1000 characters)' });
+    }
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ error: 'Invalid complaint ID' });
     }
 
     const complaint = await Complaint.findById(id);
-    if (!complaint) return res.status(404).json({ error: 'Complaint not found' });
+    if (!complaint) {
+      return res.status(404).json({ error: 'Complaint not found' });
+    }
 
-    const isOwner = String(complaint.createdBy) === String(req.user._id); // Added String() conversion
+    // Permission check
+    const isOwner = String(complaint.createdBy) === String(req.user._id);
     const isStaffOrAdmin = ['staff', 'admin'].includes(req.user.role);
     
-    console.log('User ID:', req.user._id);
-    console.log('Complaint owner ID:', complaint.createdBy);
-    console.log('Is owner:', isOwner);
-    console.log('Is staff/admin:', isStaffOrAdmin);
-    
-    // Allow comment if user is owner OR staff/admin
     if (!isOwner && !isStaffOrAdmin) {
-      console.log('Permission denied - neither owner nor staff/admin');
       return res.status(403).json({ error: 'You do not have permission to comment on this complaint' });
     }
 
+    // Staff/admin can set visibility, users can only post public comments
     const finalVisibility = isStaffOrAdmin ? visibility : 'public';
 
+    // Add comment
     complaint.comments.push({ 
       author: req.user._id, 
-      body, 
+      body: body.trim(), 
       visibility: finalVisibility,
-      admin: isStaffOrAdmin // Store if comment is from admin/staff
+      admin: isStaffOrAdmin
     });
     
     await complaint.save();
 
+    // Return populated comments
     const populatedComplaint = await Complaint.findById(complaint._id)
-      .populate('comments.author', 'name email role ');
+      .populate('comments.author', 'name email role');
     
-    res.status(201).json({ comments: populatedComplaint.comments });
-  } catch (e) {
-    console.error('Add comment error:', e);
+    res.status(201).json({ 
+      message: 'Comment added successfully',
+      comments: populatedComplaint.comments 
+    });
+  } catch (error) {
+    console.error('Add comment error:', error);
     res.status(500).json({ error: 'Could not add comment' });
+  }
+};
+
+const getComments = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: 'Invalid complaint ID' });
+    }
+
+    const complaint = await Complaint.findById(id)
+      .populate('comments.author', 'name email role')
+      .select('comments'); // Only return comments field
+
+    if (!complaint) {
+      return res.status(404).json({ error: 'Complaint not found' });
+    }
+
+    // Check permissions
+    const isOwner = String(complaint.createdBy) === String(req.user._id);
+    const isStaffOrAdmin = ['staff', 'admin'].includes(req.user.role);
+    
+    if (!isOwner && !isStaffOrAdmin) {
+      return res.status(403).json({ error: 'Access denied' });
+    }
+
+    // Filter comments based on visibility and user role
+    let visibleComments = complaint.comments;
+    
+    if (!isStaffOrAdmin) {
+      // Regular users can only see public comments
+      visibleComments = complaint.comments.filter(
+        comment => comment.visibility === 'public'
+      );
+    }
+
+    res.status(200).json({ comments: visibleComments });
+  } catch (error) {
+    console.error('Get comments error:', error);
+    res.status(500).json({ error: 'Could not fetch comments' });
   }
 };
 // ---------------- Stats Summary ----------------
@@ -210,6 +263,7 @@ export {
   createComplaint,
   statsSummary,
   addComment,
+  getComments,
   updateComplaint,
   getComplaint,
   listComplaints,

@@ -23,7 +23,6 @@ class MyApp extends StatelessWidget {
       title: 'Complaint Management System',
       debugShowCheckedModeBanner: false,
       theme: AppTheme,
-      // initialBinding: AppBinding(),
       initialRoute: RouteName.splashScreen,
       getPages: AppRoutes.appRoutes(),
     );
