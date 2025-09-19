@@ -125,7 +125,7 @@ class ComplaintController extends GetxController {
   Future<void> updateStatus(String complaintId, String newStatus) async {
     try {
       isLoading.value = true;
-      final response = await api.put('/complaints/$complaintId/status', {
+      final response = await api.put('/complaints/$complaintId/', {
         'status': newStatus,
       });
       if (response.isSuccess) {

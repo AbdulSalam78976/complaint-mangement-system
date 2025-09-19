@@ -1,60 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:get/get.dart';
+import 'package:frontend/controllers/notification%20controller/notification_controller.dart';
 
 void showNotificationsDialog() {
-  final notifications = [
-    {
-      'title': 'Complaint Status Updated',
-      'description':
-          'Network Infrastructure Issue - Status changed to IN PROGRESS',
-      'time': '2 hours ago',
-      'icon': Icons.trending_up_outlined,
-      'color': AppPalette.accentColor,
-      'unread': true,
-      'priority': 'high',
-    },
-    {
-      'title': 'New Response Received',
-      'description':
-          'IT Team: We\'ve identified the root cause and are implementing a fix.',
-      'time': '4 hours ago',
-      'icon': Icons.chat_bubble_outline,
-      'color': AppPalette.primaryColor,
-      'unread': true,
-      'priority': 'medium',
-    },
-    {
-      'title': 'Complaint Assigned',
-      'description':
-          'Your complaint has been assigned to Sarah Wilson from IT Department',
-      'time': '1 day ago',
-      'icon': Icons.person_add_alt_outlined,
-      'color': AppPalette.successColor,
-      'unread': false,
-      'priority': 'medium',
-    },
-    {
-      'title': 'Submission Confirmed',
-      'description':
-          'Your complaint "Network Infrastructure Issue" has been successfully submitted',
-      'time': '2 days ago',
-      'icon': Icons.check_circle_outline,
-      'color': AppPalette.successColor,
-      'unread': false,
-      'priority': 'low',
-    },
-    {
-      'title': 'Welcome to CMS',
-      'description':
-          'Thank you for joining! You can now submit and track complaints seamlessly.',
-      'time': '1 week ago',
-      'icon': Icons.celebration_outlined,
-      'color': AppPalette.secondaryColor,
-      'unread': false,
-      'priority': 'low',
-    },
-  ];
+  // Initialize notification controller
+  Get.put(NotificationController());
 
   Get.dialog(
     barrierColor: AppPalette.textColor.withOpacity(0.6),
@@ -122,13 +73,23 @@ void showNotificationsDialog() {
 
                   // Notifications List
                   Flexible(
-                    child: notifications.isEmpty
-                        ? _buildEmptyState(isMobile)
-                        : _buildSimpleNotificationsList(
-                            notifications,
-                            isDesktop,
-                            isMobile,
-                          ),
+                    child: GetBuilder<NotificationController>(
+                      builder: (controller) {
+                        if (controller.isLoading.value) {
+                          return const Center(
+                            child: CircularProgressIndicator(),
+                          );
+                        }
+
+                        return controller.notifications.isEmpty
+                            ? _buildEmptyState(isMobile)
+                            : _buildSimpleNotificationsList(
+                                controller.notifications,
+                                isDesktop,
+                                isMobile,
+                              );
+                      },
+                    ),
                   ),
                 ],
               ),
@@ -189,7 +150,7 @@ Widget _buildEmptyState(bool isMobile) {
 }
 
 Widget _buildSimpleNotificationsList(
-  List<Map<String, dynamic>> notifications,
+  List<NotificationModel> notifications,
   bool isDesktop,
   bool isMobile,
 ) {
@@ -199,7 +160,7 @@ Widget _buildSimpleNotificationsList(
     itemCount: notifications.length,
     itemBuilder: (context, index) {
       final notification = notifications[index];
-      final isUnread = notification['unread'] == true;
+      final isUnread = notification.unread;
 
       return Container(
         margin: EdgeInsets.only(bottom: isMobile ? 10 : 12),
@@ -223,12 +184,12 @@ Widget _buildSimpleNotificationsList(
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: (notification['color'] as Color).withOpacity(0.15),
+                      color: notification.color.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: Icon(
-                      notification['icon'] as IconData,
-                      color: notification['color'] as Color,
+                      notification.icon,
+                      color: notification.color,
                       size: isMobile ? 18 : 20,
                     ),
                   ),
@@ -243,7 +204,7 @@ Widget _buildSimpleNotificationsList(
                           children: [
                             Expanded(
                               child: Text(
-                                notification['title'] as String,
+                                notification.title,
                                 style: TextStyle(
                                   fontSize: isMobile ? 14 : 15,
                                   fontWeight: isUnread
@@ -268,7 +229,7 @@ Widget _buildSimpleNotificationsList(
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          notification['description'] as String,
+                          notification.description,
                           style: TextStyle(
                             fontSize: isMobile ? 12 : 13,
                             color: AppPalette.greyColor,
@@ -287,7 +248,7 @@ Widget _buildSimpleNotificationsList(
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              notification['time'] as String,
+                              notification.time,
                               style: TextStyle(
                                 fontSize: 12,
                                 color: AppPalette.greyColor,
@@ -308,16 +269,36 @@ Widget _buildSimpleNotificationsList(
   );
 }
 
-void _handleNotificationTap(Map<String, dynamic> notification) {
+void _handleNotificationTap(NotificationModel notification) {
+  // Mark notification as read
+  final controller = Get.find<NotificationController>();
+  controller.markAsRead(notification.id);
+
   Get.back();
-  Get.snackbar(
-    'Notification',
-    'Opening: ${notification['title']}',
-    backgroundColor: AppPalette.primaryColor,
-    colorText: AppPalette.whiteColor,
-    snackPosition: SnackPosition.BOTTOM,
-    duration: const Duration(seconds: 2),
-    margin: const EdgeInsets.all(16),
-    borderRadius: 12,
-  );
+
+  // Navigate to complaint details if complaintId exists
+  if (notification.complaintId != null) {
+    // TODO: Navigate to complaint details screen
+    Get.snackbar(
+      'Notification',
+      'Opening: ${notification.title}',
+      backgroundColor: AppPalette.primaryColor,
+      colorText: AppPalette.whiteColor,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 2),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+    );
+  } else {
+    Get.snackbar(
+      'Notification',
+      'Opening: ${notification.title}',
+      backgroundColor: AppPalette.primaryColor,
+      colorText: AppPalette.whiteColor,
+      snackPosition: SnackPosition.BOTTOM,
+      duration: const Duration(seconds: 2),
+      margin: const EdgeInsets.all(16),
+      borderRadius: 12,
+    );
+  }
 }

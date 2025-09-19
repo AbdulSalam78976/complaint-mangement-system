@@ -3,9 +3,12 @@ import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/overview_card.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/quickaction_card.dart';
-import 'package:frontend/screens/resuable%20and%20common%20components/recent_activity_card.dart'; // Import the new component
+import 'package:frontend/screens/resuable%20and%20common%20components/recent_activity_card.dart';
 import 'package:get/get.dart';
 import 'package:frontend/resources/routes/routes_names.dart';
+import 'package:frontend/controllers/complaint%20controller/complaints_controller.dart';
+import 'package:frontend/controllers/admin%20controller/admin_controller.dart';
+import 'package:frontend/models/complaint_model.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -45,6 +48,14 @@ class _AdminDashboardState extends State<AdminDashboard>
 
     _fadeController.forward();
     _slideController.forward();
+
+    // Initialize controllers and refresh data
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final complaintController = Get.find<ComplaintController>();
+      final adminController = Get.find<AdminController>();
+      complaintController.refreshComplaints();
+      adminController.fetchUsers();
+    });
   }
 
   @override
@@ -133,36 +144,58 @@ class _AdminDashboardState extends State<AdminDashboard>
                         const SizedBox(height: 24),
                         const Divider(color: Colors.white30),
                         const SizedBox(height: 24),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: OverviewCard(
-                                title: 'Total Complaints',
-                                value: '100',
-                                icon: Icons.report_problem,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: OverviewCard(
-                                title: 'Pending Complaints',
-                                value: '50',
-                                icon: Icons.pending_actions,
-                                color: Colors.orange[300]!,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: OverviewCard(
-                                title: 'Resolved Complaints',
-                                value: '50',
-                                icon: Icons.check_circle,
-                                color: Colors.green[300]!,
-                              ),
-                            ),
-                          ],
+                        // Real data from API
+                        GetBuilder<ComplaintController>(
+                          builder: (controller) {
+                            final complaints = controller.complaints;
+                            final totalComplaints = complaints.length;
+                            final pendingCount = complaints
+                                .where(
+                                  (c) =>
+                                      c.status == 'pending' ||
+                                      c.status == 'open',
+                                )
+                                .length;
+                            final resolvedCount = complaints
+                                .where((c) => c.status == 'resolved')
+                                .length;
+                            final isLoading = controller.isLoading.value;
+
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: EnhancedOverviewCard(
+                                    title: 'Total Complaints',
+                                    value: totalComplaints.toString(),
+                                    icon: Icons.report_problem,
+
+                                    isLoading: isLoading,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: EnhancedOverviewCard(
+                                    title: 'Pending Complaints',
+                                    value: pendingCount.toString(),
+                                    icon: Icons.pending_actions,
+
+                                    isLoading: isLoading,
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: EnhancedOverviewCard(
+                                    title: 'Resolved Complaints',
+                                    value: resolvedCount.toString(),
+                                    icon: Icons.check_circle,
+
+                                    isLoading: isLoading,
+                                  ),
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ],
                     ),
@@ -334,44 +367,199 @@ class _AdminDashboardState extends State<AdminDashboard>
   }
 
   Widget _buildRecentActivityList() {
-    final activities = [
-      {
-        'title': 'Complaint #1234 resolved',
-        'description': 'Resolved by Admin',
-        'time': '2 hours ago',
-        'icon': Icons.check_circle,
-        'color': Colors.green,
-      },
-      {
-        'title': 'New user registered',
-        'description': 'John Doe joined the system',
-        'time': '3 hours ago',
-        'icon': Icons.person_add,
-        'color': Colors.blue,
-      },
-      {
-        'title': 'Complaint #1235 assigned',
-        'description': 'Assigned to Technical Team',
-        'time': '5 hours ago',
-        'icon': Icons.assignment_ind,
-        'color': Colors.orange,
-      },
-      {
-        'title': 'System maintenance',
-        'description': 'Scheduled for tomorrow',
-        'time': '1 day ago',
-        'icon': Icons.build,
-        'color': Colors.purple,
-      },
-    ];
+    return GetBuilder<ComplaintController>(
+      builder: (controller) {
+        final isLoading = controller.isLoading.value;
+        final complaints = controller.complaints;
 
-    return RecentActivityList(
-      activities: activities,
+        if (isLoading && complaints.isEmpty) {
+          return _buildLoadingActivityList();
+        }
+
+        // Generate real activities from complaints
+        final activities = _generateRealActivities(complaints);
+
+        return RecentActivityList(
+          activities: activities,
+          padding: const EdgeInsets.all(20),
+          borderRadius: BorderRadius.circular(16),
+          titleFontSize: 16,
+          descriptionFontSize: 14,
+          timeFontSize: 12,
+        );
+      },
+    );
+  }
+
+  List<Map<String, dynamic>> _generateRealActivities(
+    List<Complaint> complaints,
+  ) {
+    final activities = <Map<String, dynamic>>[];
+
+    // Get recent complaints (last 5)
+    final recentComplaints = complaints.take(5).toList();
+
+    for (final complaint in recentComplaints) {
+      String title;
+      String description;
+      IconData icon;
+      Color color;
+
+      switch (complaint.status) {
+        case 'open':
+          title = 'New Complaint Submitted';
+          description = 'Complaint: ${complaint.title}';
+          icon = Icons.report_problem;
+          color = Colors.blue;
+          break;
+        case 'pending':
+          title = 'Complaint Pending Review';
+          description = 'Complaint: ${complaint.title}';
+          icon = Icons.schedule;
+          color = Colors.orange;
+          break;
+        case 'in_progress':
+          title = 'Complaint In Progress';
+          description = 'Complaint: ${complaint.title}';
+          icon = Icons.work;
+          color = Colors.purple;
+          break;
+        case 'resolved':
+          title = 'Complaint Resolved';
+          description = 'Complaint: ${complaint.title}';
+          icon = Icons.check_circle;
+          color = Colors.green;
+          break;
+        case 'closed':
+          title = 'Complaint Closed';
+          description = 'Complaint: ${complaint.title}';
+          icon = Icons.cancel;
+          color = Colors.grey;
+          break;
+        default:
+          title = 'Complaint Updated';
+          description = 'Complaint: ${complaint.title}';
+          icon = Icons.update;
+          color = Colors.indigo;
+      }
+
+      activities.add({
+        'title': title,
+        'description': description,
+        'time': _formatTimeAgo(complaint.updatedAt),
+        'icon': icon,
+        'color': color,
+      });
+    }
+
+    // If no complaints, show a default message
+    if (activities.isEmpty) {
+      activities.add({
+        'title': 'No Recent Activity',
+        'description': 'No complaints have been submitted yet',
+        'time': 'N/A',
+        'icon': Icons.info,
+        'color': Colors.grey,
+      });
+    }
+
+    return activities;
+  }
+
+  String _formatTimeAgo(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inDays > 0) {
+      return '${difference.inDays} day${difference.inDays == 1 ? '' : 's'} ago';
+    } else if (difference.inHours > 0) {
+      return '${difference.inHours} hour${difference.inHours == 1 ? '' : 's'} ago';
+    } else if (difference.inMinutes > 0) {
+      return '${difference.inMinutes} minute${difference.inMinutes == 1 ? '' : 's'} ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
+  Widget _buildLoadingActivityList() {
+    return Container(
       padding: const EdgeInsets.all(20),
-      borderRadius: BorderRadius.circular(16),
-      titleFontSize: 16,
-      descriptionFontSize: 14,
-      timeFontSize: 12,
+      decoration: BoxDecoration(
+        color: AppPalette.whiteColor,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(4, (index) {
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppPalette.primaryColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Center(
+                    child: SizedBox(
+                      width: 16,
+                      height: 16,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          AppPalette.primaryColor.withOpacity(0.7),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        height: 16,
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          color: AppPalette.textColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        height: 12,
+                        width: 120,
+                        decoration: BoxDecoration(
+                          color: AppPalette.textColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Container(
+                        height: 10,
+                        width: 80,
+                        decoration: BoxDecoration(
+                          color: AppPalette.textColor.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ),
     );
   }
 }

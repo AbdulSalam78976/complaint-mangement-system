@@ -57,18 +57,18 @@ class LoginController extends GetxController {
         if (token != null) {
           await SessionManager.saveToken(token);
         }
-        Get.snackbar(
-          "Login Successful 🎉",
-          "Welcome back!",
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.green.shade600,
-          colorText: Colors.white,
-          margin: const EdgeInsets.all(12),
-          duration: const Duration(seconds: 2),
-        );
 
         Future.delayed(const Duration(seconds: 1), () {
           SessionManager.navigateBasedOnRole();
+          Get.snackbar(
+            "Login Successful 🎉",
+            "Welcome back!",
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: Colors.green.shade600,
+            colorText: Colors.white,
+            margin: const EdgeInsets.all(12),
+            duration: const Duration(seconds: 2),
+          );
         });
       } else {
         if (result.statusCode == 403) {

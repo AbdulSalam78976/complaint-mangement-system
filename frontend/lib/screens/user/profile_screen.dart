@@ -1,9 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:frontend/resources/theme/colors.dart';
 import 'package:frontend/screens/resuable%20and%20common%20components/appbar.dart';
+import 'package:get/get.dart';
+import 'package:frontend/utils/sessionmanager.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  Map<String, dynamic>? userData;
+  bool isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+  }
+
+  Future<void> _loadUserData() async {
+    try {
+      final decodedToken = await SessionManager.decodeToken();
+      setState(() {
+        userData = decodedToken;
+        isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,25 +44,38 @@ class ProfileScreen extends StatelessWidget {
         showBack: true,
         showLogo: false,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _HeaderCard(),
-            const SizedBox(height: 16),
-            _InfoCard(),
-            const SizedBox(height: 16),
-            _SecurityCard(),
-          ],
-        ),
-      ),
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  _HeaderCard(userData: userData),
+                  const SizedBox(height: 16),
+                  _InfoCard(userData: userData),
+                  const SizedBox(height: 16),
+                  _SecurityCard(),
+                ],
+              ),
+            ),
     );
   }
 }
 
 class _HeaderCard extends StatelessWidget {
+  final Map<String, dynamic>? userData;
+
+  const _HeaderCard({this.userData});
+
   @override
   Widget build(BuildContext context) {
+    final name = userData?['name'] ?? 'User';
+    final email = userData?['email'] ?? 'user@example.com';
+    final userId = userData?['userId'] ?? 'N/A';
+    final role = userData?['role'] ?? 'user';
+    final initials = name.isNotEmpty
+        ? name.split(' ').map((n) => n[0]).join('').toUpperCase()
+        : 'U';
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -55,10 +98,16 @@ class _HeaderCard extends StatelessWidget {
               shape: BoxShape.circle,
               border: Border.all(color: AppPalette.borderColor, width: 2),
             ),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 36,
-              backgroundImage: NetworkImage(
-                'https://images.unsplash.com/photo-1499714608240-22fc6ad53fb2?auto=format&fit=crop&w=2070&q=80',
+              backgroundColor: AppPalette.primaryColor.withOpacity(0.1),
+              child: Text(
+                initials,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: AppPalette.primaryColor,
+                ),
               ),
             ),
           ),
@@ -68,7 +117,7 @@ class _HeaderCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'John Doe',
+                  name,
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -76,23 +125,29 @@ class _HeaderCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  'john.doe@example.com',
-                  style: TextStyle(color: AppPalette.greyColor),
-                ),
+                Text(email, style: TextStyle(color: AppPalette.greyColor)),
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    _Pill(text: 'User ID: 10293'),
+                    _Pill(text: 'User ID: $userId'),
                     const SizedBox(width: 8),
-                    _Pill(text: 'Role: User'),
+                    _Pill(text: 'Role: ${role.toUpperCase()}'),
                   ],
                 ),
               ],
             ),
           ),
           ElevatedButton(
-            onPressed: () {},
+            onPressed: () {
+              // TODO: Implement edit profile functionality
+              Get.snackbar(
+                'Feature Coming Soon',
+                'Edit profile functionality will be implemented soon',
+                snackPosition: SnackPosition.BOTTOM,
+                backgroundColor: AppPalette.primaryColor,
+                colorText: Colors.white,
+              );
+            },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppPalette.primaryColor,
               foregroundColor: AppPalette.whiteColor,
@@ -110,8 +165,17 @@ class _HeaderCard extends StatelessWidget {
 }
 
 class _InfoCard extends StatelessWidget {
+  final Map<String, dynamic>? userData;
+
+  const _InfoCard({this.userData});
+
   @override
   Widget build(BuildContext context) {
+    final name = userData?['name'] ?? 'User';
+    final email = userData?['email'] ?? 'user@example.com';
+    final phone = userData?['phone'] ?? 'Not provided';
+    final department = userData?['department'] ?? 'Not specified';
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
@@ -122,13 +186,13 @@ class _InfoCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: const [
-          _SectionTitle('Personal Information'),
-          SizedBox(height: 12),
-          _FieldRow(label: 'Full Name', value: 'John Doe'),
-          _FieldRow(label: 'Email', value: 'john.doe@example.com'),
-          _FieldRow(label: 'Phone', value: '+1 555 123 4567'),
-          _FieldRow(label: 'Department', value: 'IT'),
+        children: [
+          const _SectionTitle('Personal Information'),
+          const SizedBox(height: 12),
+          _FieldRow(label: 'Full Name', value: name),
+          _FieldRow(label: 'Email', value: email),
+          _FieldRow(label: 'Phone', value: phone),
+          _FieldRow(label: 'Department', value: department),
         ],
       ),
     );
