@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:frontend/data/api_service.dart';
 import 'package:frontend/utils/utils.dart';
 import 'package:frontend/resources/theme/colors.dart';
+import 'package:frontend/controllers/complaint%20controller/complaints_controller.dart';
 
 class AddNewComplaintController extends GetxController {
   // Form key
@@ -162,6 +163,13 @@ class AddNewComplaintController extends GetxController {
         );
 
         if (result.isSuccess) {
+          // Notify global complaints controller to refresh
+          try {
+            if (Get.isRegistered<ComplaintController>()) {
+              await Get.find<ComplaintController>().refreshComplaints();
+            }
+          } catch (_) {}
+
           Get.back();
           Get.delete<AddNewComplaintController>();
 

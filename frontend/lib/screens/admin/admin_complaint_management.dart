@@ -135,29 +135,32 @@ class AdminComplaintManagement extends StatelessWidget {
         );
       }
 
-      return ListView.builder(
-        padding: const EdgeInsets.all(16),
-        itemCount: complaints.length,
-        itemBuilder: (context, index) {
-          final complaint = complaints[index];
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: EnhancedComplaintCard(
-              title: complaint.title,
-              department: complaint.category,
-              priority: complaint.priority,
-              status: complaint.status,
-              time: timeago.format(complaint.createdAt),
-              description: complaint.description,
-              onTap: () {
-                Get.toNamed(
-                  RouteName.complaintDetailsScreen,
-                  arguments: {'complaint': complaint, 'isAdminView': true},
-                );
-              },
-            ),
-          );
-        },
+      return RefreshIndicator(
+        onRefresh: controller.fetchComplaints,
+        child: ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: complaints.length,
+          itemBuilder: (context, index) {
+            final complaint = complaints[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: EnhancedComplaintCard(
+                title: complaint.title,
+                department: complaint.category,
+                priority: complaint.priority,
+                status: complaint.status,
+                time: timeago.format(complaint.createdAt),
+                description: complaint.description,
+                onTap: () {
+                  Get.toNamed(
+                    RouteName.complaintDetailsScreen,
+                    arguments: {'complaint': complaint, 'isAdminView': true},
+                  );
+                },
+              ),
+            );
+          },
+        ),
       );
     });
   }

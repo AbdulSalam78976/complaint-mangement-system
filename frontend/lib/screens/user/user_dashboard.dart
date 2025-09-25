@@ -9,6 +9,7 @@ import 'package:frontend/resources/routes/routes_names.dart';
 import 'package:frontend/controllers/complaint%20controller/complaints_controller.dart';
 import 'package:frontend/models/complaint_model.dart';
 import 'package:frontend/screens/resuable and common components/overview_card.dart';
+import 'package:frontend/utils/sessionmanager.dart';
 
 class UserDashboard extends StatefulWidget {
   const UserDashboard({super.key});
@@ -23,10 +24,13 @@ class _UserDashboardState extends State<UserDashboard>
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+  String _userName = 'User';
 
   @override
   void initState() {
     super.initState();
+    // Ensure controller is registered before first build so Obx(find) works
+    Get.put(ComplaintController());
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -49,11 +53,31 @@ class _UserDashboardState extends State<UserDashboard>
     _fadeController.forward();
     _slideController.forward();
 
+    _loadUserName();
+
     // Refresh complaints data when dashboard opens
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = Get.find<ComplaintController>();
       controller.refreshComplaints();
     });
+  }
+
+  Future<void> _loadUserName() async {
+    try {
+      final decoded = await SessionManager.decodeToken();
+      if (decoded != null && mounted) {
+        final dynamic name = decoded['name'] ?? decoded['username'];
+        final dynamic email = decoded['email'];
+        final resolved = (name is String && name.trim().isNotEmpty)
+            ? name.trim()
+            : (email is String && email.contains('@')
+                  ? email.split('@').first
+                  : 'User');
+        setState(() {
+          _userName = resolved;
+        });
+      }
+    } catch (_) {}
   }
 
   @override
@@ -111,7 +135,7 @@ class _UserDashboardState extends State<UserDashboard>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    'Welcome Back, John! 👋',
+                                    'Welcome Back, $_userName! 👋',
                                     style: TextStyle(
                                       fontSize: 26,
                                       fontWeight: FontWeight.bold,
@@ -161,128 +185,127 @@ class _UserDashboardState extends State<UserDashboard>
                         ),
                         const SizedBox(height: 16),
                         // Overview Cards - Real data from API
-                        GetBuilder<ComplaintController>(
-                          builder: (controller) {
-                            final complaints = controller.complaints;
-                            final isLoading = controller.isLoading.value;
-                            final totalComplaints = complaints.length;
-                            final inProgressCount = complaints
-                                .where((c) => c.status == 'in_progress')
-                                .length;
-                            final resolvedCount = complaints
-                                .where((c) => c.status == 'resolved')
-                                .length;
-                            final avgResponseTime = _calculateAvgResponseTime(
-                              complaints,
-                            );
+                        Obx(() {
+                          final controller = Get.find<ComplaintController>();
+                          final complaints = controller.complaints;
+                          final isLoading = controller.isLoading.value;
+                          final totalComplaints = complaints.length;
+                          final inProgressCount = complaints
+                              .where((c) => c.status == 'in_progress')
+                              .length;
+                          final resolvedCount = complaints
+                              .where((c) => c.status == 'resolved')
+                              .length;
+                          final avgResponseTime = _calculateAvgResponseTime(
+                            complaints,
+                          );
 
-                            return LayoutBuilder(
-                              builder: (context, constraints) {
-                                bool isDesktop = constraints.maxWidth > 768;
+                          return LayoutBuilder(
+                            builder: (context, constraints) {
+                              bool isDesktop = constraints.maxWidth > 768;
 
-                                if (isDesktop) {
-                                  // Desktop: All cards in one row
-                                  return Row(
-                                    children: [
-                                      Expanded(
-                                        child: EnhancedOverviewCard(
-                                          title: 'Total Complaints',
-                                          value: totalComplaints.toString(),
-                                          icon: Icons.receipt_long_outlined,
+                              if (isDesktop) {
+                                // Desktop: All cards in one row
+                                return Row(
+                                  children: [
+                                    Expanded(
+                                      child: EnhancedOverviewCard(
+                                        title: 'Total Complaints',
+                                        value: totalComplaints.toString(),
+                                        icon: Icons.receipt_long_outlined,
 
-                                          isLoading: isLoading,
-                                        ),
+                                        isLoading: isLoading,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: EnhancedOverviewCard(
-                                          title: 'In Progress',
-                                          value: inProgressCount.toString(),
-                                          icon: Icons.schedule_outlined,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: EnhancedOverviewCard(
+                                        title: 'In Progress',
+                                        value: inProgressCount.toString(),
+                                        icon: Icons.schedule_outlined,
 
-                                          isLoading: isLoading,
-                                        ),
+                                        isLoading: isLoading,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: EnhancedOverviewCard(
-                                          title: 'Resolved',
-                                          value: resolvedCount.toString(),
-                                          icon: Icons.check_circle_outline,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: EnhancedOverviewCard(
+                                        title: 'Resolved',
+                                        value: resolvedCount.toString(),
+                                        icon: Icons.check_circle_outline,
 
-                                          isLoading: isLoading,
-                                        ),
+                                        isLoading: isLoading,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: EnhancedOverviewCard(
-                                          title: 'Avg. Response',
-                                          value: avgResponseTime,
-                                          icon: Icons.speed_outlined,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: EnhancedOverviewCard(
+                                        title: 'Avg. Response',
+                                        value: avgResponseTime,
+                                        icon: Icons.speed_outlined,
 
-                                          isLoading: isLoading,
-                                        ),
+                                        isLoading: isLoading,
                                       ),
-                                    ],
-                                  );
-                                } else {
-                                  // Mobile: 2x2 Grid
-                                  return Column(
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: EnhancedOverviewCard(
-                                              title: 'Total Complaints',
-                                              value: totalComplaints.toString(),
-                                              icon: Icons.receipt_long_outlined,
+                                    ),
+                                  ],
+                                );
+                              } else {
+                                // Mobile: 2x2 Grid
+                                return Column(
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: EnhancedOverviewCard(
+                                            title: 'Total Complaints',
+                                            value: totalComplaints.toString(),
+                                            icon: Icons.receipt_long_outlined,
 
-                                              isLoading: isLoading,
-                                            ),
+                                            isLoading: isLoading,
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: EnhancedOverviewCard(
-                                              title: 'In Progress',
-                                              value: inProgressCount.toString(),
-                                              icon: Icons.schedule_outlined,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: EnhancedOverviewCard(
+                                            title: 'In Progress',
+                                            value: inProgressCount.toString(),
+                                            icon: Icons.schedule_outlined,
 
-                                              isLoading: isLoading,
-                                            ),
+                                            isLoading: isLoading,
                                           ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 12),
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: EnhancedOverviewCard(
-                                              title: 'Resolved',
-                                              value: resolvedCount.toString(),
-                                              icon: Icons.check_circle_outline,
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 12),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: EnhancedOverviewCard(
+                                            title: 'Resolved',
+                                            value: resolvedCount.toString(),
+                                            icon: Icons.check_circle_outline,
 
-                                              isLoading: isLoading,
-                                            ),
+                                            isLoading: isLoading,
                                           ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: EnhancedOverviewCard(
-                                              title: 'Avg. Response',
-                                              value: avgResponseTime,
-                                              icon: Icons.speed_outlined,
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: EnhancedOverviewCard(
+                                            title: 'Avg. Response',
+                                            value: avgResponseTime,
+                                            icon: Icons.speed_outlined,
 
-                                              isLoading: isLoading,
-                                            ),
+                                            isLoading: isLoading,
                                           ),
-                                        ],
-                                      ),
-                                    ],
-                                  );
-                                }
-                              },
-                            );
-                          },
-                        ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                );
+                              }
+                            },
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -406,74 +429,73 @@ class _UserDashboardState extends State<UserDashboard>
                   const SizedBox(height: 16),
 
                   // Real complaints from API
-                  GetBuilder<ComplaintController>(
-                    builder: (controller) {
-                      final isLoading = controller.isLoading.value;
-                      final recentComplaints = controller.complaints
-                          .take(3)
-                          .toList();
+                  Obx(() {
+                    final controller = Get.find<ComplaintController>();
+                    final isLoading = controller.isLoading.value;
+                    final recentComplaints = controller.complaints
+                        .take(3)
+                        .toList();
 
-                      if (isLoading && recentComplaints.isEmpty) {
-                        return _buildLoadingComplaintsList();
-                      }
+                    if (isLoading && recentComplaints.isEmpty) {
+                      return _buildLoadingComplaintsList();
+                    }
 
-                      if (recentComplaints.isEmpty) {
-                        return Container(
-                          padding: const EdgeInsets.all(20),
-                          decoration: BoxDecoration(
-                            color: AppPalette.whiteColor,
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppPalette.borderColor.withOpacity(0.1),
-                            ),
+                    if (recentComplaints.isEmpty) {
+                      return Container(
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          color: AppPalette.whiteColor,
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppPalette.borderColor.withOpacity(0.1),
                           ),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.inbox_outlined,
-                                size: 48,
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.inbox_outlined,
+                              size: 48,
+                              color: AppPalette.textColor.withOpacity(0.5),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'No complaints yet',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w600,
+                                color: AppPalette.textColor.withOpacity(0.7),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Submit your first complaint to get started',
+                              style: TextStyle(
+                                fontSize: 14,
                                 color: AppPalette.textColor.withOpacity(0.5),
                               ),
-                              const SizedBox(height: 12),
-                              Text(
-                                'No complaints yet',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppPalette.textColor.withOpacity(0.7),
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                'Submit your first complaint to get started',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: AppPalette.textColor.withOpacity(0.5),
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
+                              textAlign: TextAlign.center,
+                            ),
+                          ],
+                        ),
+                      );
+                    }
+
+                    return Column(
+                      children: recentComplaints.map((complaint) {
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          child: EnhancedComplaintCard(
+                            title: complaint.title,
+                            department: complaint.category,
+                            priority: complaint.priority,
+                            status: complaint.status,
+                            time: _formatTimeAgo(complaint.createdAt),
+                            description: complaint.description,
                           ),
                         );
-                      }
-
-                      return Column(
-                        children: recentComplaints.map((complaint) {
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 16),
-                            child: EnhancedComplaintCard(
-                              title: complaint.title,
-                              department: complaint.category,
-                              priority: complaint.priority,
-                              status: complaint.status,
-                              time: _formatTimeAgo(complaint.createdAt),
-                              description: complaint.description,
-                            ),
-                          );
-                        }).toList(),
-                      );
-                    },
-                  ),
+                      }).toList(),
+                    );
+                  }),
 
                   const SizedBox(height: 32),
                 ],

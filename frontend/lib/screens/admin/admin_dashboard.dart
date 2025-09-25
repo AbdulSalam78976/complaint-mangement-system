@@ -27,6 +27,9 @@ class _AdminDashboardState extends State<AdminDashboard>
   @override
   void initState() {
     super.initState();
+    // Ensure controllers are registered before first build so Obx(find) works
+    Get.put(ComplaintController());
+    Get.put(AdminController());
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -49,7 +52,7 @@ class _AdminDashboardState extends State<AdminDashboard>
     _fadeController.forward();
     _slideController.forward();
 
-    // Initialize controllers and refresh data
+    // Refresh data after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final complaintController = Get.find<ComplaintController>();
       final adminController = Get.find<AdminController>();
@@ -145,58 +148,56 @@ class _AdminDashboardState extends State<AdminDashboard>
                         const Divider(color: Colors.white30),
                         const SizedBox(height: 24),
                         // Real data from API
-                        GetBuilder<ComplaintController>(
-                          builder: (controller) {
-                            final complaints = controller.complaints;
-                            final totalComplaints = complaints.length;
-                            final pendingCount = complaints
-                                .where(
-                                  (c) =>
-                                      c.status == 'pending' ||
-                                      c.status == 'open',
-                                )
-                                .length;
-                            final resolvedCount = complaints
-                                .where((c) => c.status == 'resolved')
-                                .length;
-                            final isLoading = controller.isLoading.value;
+                        Obx(() {
+                          final controller = Get.find<ComplaintController>();
+                          final complaints = controller.complaints;
+                          final totalComplaints = complaints.length;
+                          final pendingCount = complaints
+                              .where(
+                                (c) =>
+                                    c.status == 'pending' || c.status == 'open',
+                              )
+                              .length;
+                          final resolvedCount = complaints
+                              .where((c) => c.status == 'resolved')
+                              .length;
+                          final isLoading = controller.isLoading.value;
 
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: EnhancedOverviewCard(
-                                    title: 'Total Complaints',
-                                    value: totalComplaints.toString(),
-                                    icon: Icons.report_problem,
+                          return Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: EnhancedOverviewCard(
+                                  title: 'Total Complaints',
+                                  value: totalComplaints.toString(),
+                                  icon: Icons.report_problem,
 
-                                    isLoading: isLoading,
-                                  ),
+                                  isLoading: isLoading,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: EnhancedOverviewCard(
-                                    title: 'Pending Complaints',
-                                    value: pendingCount.toString(),
-                                    icon: Icons.pending_actions,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: EnhancedOverviewCard(
+                                  title: 'Pending Complaints',
+                                  value: pendingCount.toString(),
+                                  icon: Icons.pending_actions,
 
-                                    isLoading: isLoading,
-                                  ),
+                                  isLoading: isLoading,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: EnhancedOverviewCard(
-                                    title: 'Resolved Complaints',
-                                    value: resolvedCount.toString(),
-                                    icon: Icons.check_circle,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: EnhancedOverviewCard(
+                                  title: 'Resolved Complaints',
+                                  value: resolvedCount.toString(),
+                                  icon: Icons.check_circle,
 
-                                    isLoading: isLoading,
-                                  ),
+                                  isLoading: isLoading,
                                 ),
-                              ],
-                            );
-                          },
-                        ),
+                              ),
+                            ],
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -367,28 +368,27 @@ class _AdminDashboardState extends State<AdminDashboard>
   }
 
   Widget _buildRecentActivityList() {
-    return GetBuilder<ComplaintController>(
-      builder: (controller) {
-        final isLoading = controller.isLoading.value;
-        final complaints = controller.complaints;
+    return Obx(() {
+      final controller = Get.find<ComplaintController>();
+      final isLoading = controller.isLoading.value;
+      final complaints = controller.complaints;
 
-        if (isLoading && complaints.isEmpty) {
-          return _buildLoadingActivityList();
-        }
+      if (isLoading && complaints.isEmpty) {
+        return _buildLoadingActivityList();
+      }
 
-        // Generate real activities from complaints
-        final activities = _generateRealActivities(complaints);
+      // Generate real activities from complaints
+      final activities = _generateRealActivities(complaints);
 
-        return RecentActivityList(
-          activities: activities,
-          padding: const EdgeInsets.all(20),
-          borderRadius: BorderRadius.circular(16),
-          titleFontSize: 16,
-          descriptionFontSize: 14,
-          timeFontSize: 12,
-        );
-      },
-    );
+      return RecentActivityList(
+        activities: activities,
+        padding: const EdgeInsets.all(20),
+        borderRadius: BorderRadius.circular(16),
+        titleFontSize: 16,
+        descriptionFontSize: 14,
+        timeFontSize: 12,
+      );
+    });
   }
 
   List<Map<String, dynamic>> _generateRealActivities(
